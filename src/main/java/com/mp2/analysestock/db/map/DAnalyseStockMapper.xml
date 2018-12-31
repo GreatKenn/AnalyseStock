@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.mp2.analysestock.db.dao.DAnalyseStockMapper">
+
+    <resultMap id="Limit10ResultMap" type="com.mp2.analysestock.db.model.DAnalyseStockLimit10">
+        <result column="yyyymmdd" property="yyyymmdd" jdbcType="VARCHAR"/>
+        <result column="sh_lup10_count" property="sh_lup10_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10_count" property="sz_lup10_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10ag_count" property="sh_lup10ag_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10ag_count" property="sz_lup10ag_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10nc_count" property="sh_lup10nc_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10nc_count" property="sz_lup10nc_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10l2_count" property="sh_lup10l2_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10l2_count" property="sz_lup10l2_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10l3_count" property="sh_lup10l3_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10l3_count" property="sz_lup10l3_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10l4_count" property="sh_lup10l4_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10l4_count" property="sz_lup10l4_count" jdbcType="INTEGER"/>
+        <result column="sh_lup10l5_count" property="sh_lup10l5_count" jdbcType="INTEGER"/>
+        <result column="sz_lup10l5_count" property="sz_lup10l5_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10_count" property="sh_ldw10_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10_count" property="sz_ldw10_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10nc_count" property="sh_ldw10nc_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10nc_count" property="sz_ldw10nc_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10l2_count" property="sh_ldw10l2_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10l2_count" property="sz_ldw10l2_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10l3_count" property="sh_ldw10l3_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10l3_count" property="sz_ldw10l3_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10l4_count" property="sh_ldw10l4_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10l4_count" property="sz_ldw10l4_count" jdbcType="INTEGER"/>
+        <result column="sh_ldw10l5_count" property="sh_ldw10l5_count" jdbcType="INTEGER"/>
+        <result column="sz_ldw10l5_count" property="sz_ldw10l5_count" jdbcType="INTEGER"/>
+        <result column="sh_lud10_count" property="sh_lud10_count" jdbcType="INTEGER"/>
+        <result column="sz_lud10_count" property="sz_lud10_count" jdbcType="INTEGER"/>
+        <result column="sh_stock_count" property="sh_stock_count" jdbcType="INTEGER"/>
+        <result column="sz_stock_count" property="sz_stock_count" jdbcType="INTEGER"/>
+        <result column="sh_index_000001" property="sh_index_000001" jdbcType="DECIMAL"/>
+        <result column="sz_index_399001" property="sz_index_399001" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="IndexResultMap" type="com.mp2.analysestock.db.model.DIndexData">
+        <result column="yyyymmdd" property="yyyymmdd" jdbcType="VARCHAR"/>
+        <result column="sh_close" property="sh_close" jdbcType="DECIMAL"/>
+        <result column="sh_volume" property="sh_volume" jdbcType="INTEGER"/>
+        <result column="sh_change" property="sh_change" jdbcType="DECIMAL"/>
+        <result column="sz_close" property="sz_close" jdbcType="DECIMAL"/>
+        <result column="sz_volume" property="sz_volume" jdbcType="INTEGER"/>
+        <result column="sz_change" property="sz_change" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="BaseResultMap" type="com.mp2.analysestock.db.model.DBaseData">
+        <result column="yyyymmdd" property="yyyymmdd" jdbcType="VARCHAR"/>
+        <result column="close" property="close_val" jdbcType="DECIMAL"/>
+        <result column="volume" property="volume_val" jdbcType="INTEGER"/>
+        <result column="change" property="change_val" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="EventResultMap" type="com.mp2.analysestock.db.model.DEventData">
+        <result column="yyyymmdd" property="yyyymmdd" jdbcType="VARCHAR"/>
+        <result column="icon_name" property="icon_name" jdbcType="VARCHAR"/>
+        <result column="event_name" property="event_name" jdbcType="VARCHAR"/>
+        <result column="event_memo" property="event_memo" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="YearWeekCountResultMap" type="com.mp2.analysestock.db.model.DYearWeekCount">
+        <result column="yyyy" property="year" jdbcType="VARCHAR"/>
+        <result column="week" property="week" jdbcType="VARCHAR"/>
+        <result column="stockcount" property="count" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="YearWeekCountByTypeResultMap" type="com.mp2.analysestock.db.model.DYearWeekCountByType">
+        <result column="yyyy" property="year" jdbcType="VARCHAR"/>
+        <result column="week" property="week" jdbcType="VARCHAR"/>
+        <result column="stocktype" property="type" jdbcType="VARCHAR"/>
+        <result column="stockcount" property="count" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="FeelingUpDown10ResultMap" type="com.mp2.analysestock.db.model.DFeelingUpDown10">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="up10" property="up10" jdbcType="INTEGER"/>
+        <result column="up10nc" property="up10nc" jdbcType="INTEGER"/>
+        <result column="down10" property="down10" jdbcType="INTEGER"/>
+        <result column="down10nc" property="down10nc" jdbcType="INTEGER"/>
+        <result column="updown12" property="updown12" jdbcType="INTEGER"/>
+        <result column="up10down" property="up10down" jdbcType="INTEGER"/>
+        <result column="down10up" property="down10up" jdbcType="INTEGER"/>
+        <result column="up10d2" property="up10d2" jdbcType="INTEGER"/>
+        <result column="up10d3" property="up10d3" jdbcType="INTEGER"/>
+        <result column="up10d4" property="up10d4" jdbcType="INTEGER"/>
+        <result column="up10d5" property="up10d5" jdbcType="INTEGER"/>
+        <result column="down10d2" property="down10d2" jdbcType="INTEGER"/>
+        <result column="down10d3" property="down10d3" jdbcType="INTEGER"/>
+        <result column="down10d4" property="down10d4" jdbcType="INTEGER"/>
+        <result column="down10d5" property="down10d5" jdbcType="INTEGER"/>
+        <result column="updouble25d" property="updouble25d" jdbcType="INTEGER"/>
+        <result column="downdouble25d" property="downdouble25d" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="IndexDataResultMap" type="com.mp2.analysestock.db.model.D2IndexData">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="close" property="close_val" jdbcType="DECIMAL"/>
+        <result column="change" property="change_val" jdbcType="DECIMAL"/>
+        <result column="pct_change" property="pct_change_val" jdbcType="DECIMAL"/>
+        <result column="vol" property="volume_val" jdbcType="INTEGER"/>
+        <result column="amount" property="amount_val" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <resultMap id="EveryDayTotalResultMap" type="com.mp2.analysestock.db.model.DEveryDayTotal">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="sh_close" property="sh_close" jdbcType="DECIMAL"/>
+        <result column="sz_close" property="sz_close" jdbcType="DECIMAL"/>
+        <result column="sh_turnover_rate" property="sh_turnover_rate" jdbcType="DECIMAL"/>
+        <result column="sz_turnover_rate" property="sz_turnover_rate" jdbcType="DECIMAL"/>
+        <result column="sh_total_mv" property="sh_total_mv" jdbcType="DECIMAL"/>
+        <result column="sz_total_mv" property="sz_total_mv" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="EveryDayMarginResultMap" type="com.mp2.analysestock.db.model.DEveryDayMargin">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="sh_rzye" property="sh_rzye" jdbcType="DECIMAL"/>
+        <result column="sz_rzye" property="sz_rzye" jdbcType="DECIMAL"/>
+        <result column="sh_rqye" property="sh_rqye" jdbcType="DECIMAL"/>
+        <result column="sz_rqye" property="sz_rqye" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="EveryDayHsgtResultMap" type="com.mp2.analysestock.db.model.DEveryDayHsgt">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="ggt_ss" property="ggt_ss" jdbcType="DECIMAL"/>
+        <result column="ggt_sz" property="ggt_sz" jdbcType="DECIMAL"/>
+        <result column="hgt" property="hgt" jdbcType="DECIMAL"/>
+        <result column="sgt" property="sgt" jdbcType="DECIMAL"/>
+        <result column="north_money" property="north_money" jdbcType="DECIMAL"/>
+        <result column="south_money" property="south_money" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        yyyymmdd, sh_lup10_count, sz_lup10_count, sh_lup10ag_count,
+    sz_lup10ag_count, sh_lup10nc_count, sz_lup10nc_count, sh_lup10l2_count, sz_lup10l2_count, sh_lup10l3_count,
+    sz_lup10l3_count, sh_lup10l4_count, sz_lup10l4_count, sh_lup10l5_count, sz_lup10l5_count, sh_ldw10_count,
+    sz_ldw10_count, sh_ldw10nc_count, sz_ldw10nc_count, sh_ldw10l2_count, sz_ldw10l2_count, sh_ldw10l3_count,
+    sz_ldw10l3_count, sh_ldw10l4_count, sz_ldw10l4_count, sh_ldw10l5_count, sz_ldw10l5_count, sh_lud10_count,
+    sz_lud10_count, sh_stock_count, sz_stock_count, b.close as sh_index_000001, c.close as sz_index_399001
+    </sql>
+
+    <select id="selectAllData" resultMap="Limit10ResultMap" parameterType="java.util.HashMap">
+        select
+        <include refid="Base_Column_List"/>
+        from d_analyse_stock_limit10 a, d_trade_index_sh000001 b, d_trade_index_sz399001 c
+        where a.yyyymmdd = b.date and a.yyyymmdd = c.date
+        order by yyyymmdd asc
+        <if test="pageStartPos != null">
+            limit #{pageStartPos}, #{pageSize}
+        </if>
+    </select>
+
+    <select id="selectIndexData" resultMap="IndexResultMap" parameterType="java.util.HashMap">
+        select a.date as yyyymmdd, a.close as sh_close, a.volume/100 as sh_volume, a.change as sh_change, b.close as
+        sz_close, b.volume/100 as sz_volume, b.change as sz_change
+        from d_trade_index_sh000001 a, d_trade_index_sz399001 b
+        where a.date >= '2000-01-01' and a.date = b.date
+        order by a.date
+        <if test="pageStartPos != null">
+            limit #{pageStartPos}, #{pageSize}
+        </if>
+    </select>
+
+    <select id="selectEventData" resultMap="EventResultMap">
+        select yyyymmdd, icon_name, event_name, event_memo
+        from d_event_milestone
+        where yyyymmdd in (select `date` from d_trade_index_sh000001)
+        order by yyyymmdd, event_name
+    </select>
+
+    <select id="selectIndex399006" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select `date` as yyyymmdd, `close`, `volume`/100 as volume, `change`
+        from d_trade_index_sz399006
+        where `date` >= '2000-01-01'
+        order by `date`
+        <if test="pageStartPos != null">
+            limit #{pageStartPos}, #{pageSize}
+        </if>
+    </select>
+
+    <select id="selectNewStockCountByYearWeek" resultMap="YearWeekCountResultMap">
+        select substr(`date`, 1, 4) as 'yyyy', week(date, 5) as 'week', 0 as 'stockcount' from `d_trade_index_sh000001`
+        where date >= '2000-01-01'
+        group by substr(`date`, 1, 4), week(date, 5)
+        order by substr(`date`, 1, 4), week(date, 5)
+    </select>
+
+    <select id="selectNewStockCountByYearWeekType" resultMap="YearWeekCountByTypeResultMap">
+        select stocktype, `yyyy`, `week`, count(1) as stockcount
+        from (
+        select case substr(code, 1,1) when '6' then '上证' when '0' then '深证' when '3' then '创业' end as 'stocktype'
+        , substr(timeToMarket, 1, 4) as 'yyyy'
+        , week(timeToMarket, 5) as 'week'
+        from d_stock_basics
+        where timeToMarket >= '20000101'
+        ) data
+        group by stocktype, `yyyy`, `week`
+        order by stocktype, `yyyy`, `week`
+    </select>
+
+    <select id="selectFeelingUpDown10" resultMap="FeelingUpDown10ResultMap">
+        select cal_date as trade_date, sum(up10) as up10, sum(up10nc) as up10nc
+        , sum(down10) as down10, sum(down10nc) as down10nc
+        , sum(updown12) as updown12
+        , sum(up10down) as up10down, sum(down10up) as down10up
+        , sum(up10d2) as up10d2, sum(up10d3) as up10d3, sum(up10d4) as up10d4, sum(up10d5) as up10d5
+        , sum(down10d2) as down10d2, sum(down10d3) as down10d3, sum(down10d4) as down10d4, sum(down10d5) as down10d5
+        , sum(updouble25d) as updouble25d, sum(downdouble25d) as downdouble25d
+        from (
+            select b.cal_date, case when data_type = 'up10' then 1 else 0 end as up10, case when data_type = 'up10nc' then 1 else 0 end as up10nc
+            , case when data_type = 'down10' then 1 else 0 end as down10, case when data_type = 'down10nc' then 1 else 0 end as down10nc
+            , case when data_type = 'updown12' then 1 else 0 end as updown12
+            , case when data_type = 'up10down' then 1 else 0 end as up10down, case when data_type = 'down10up' then 1 else 0 end as down10up
+            , case when data_type = 'up10d2' then 1 else 0 end as up10d2, case when data_type = 'up10d3' then 1 else 0 end as up10d3
+            , case when data_type = 'up10d4' then 1 else 0 end as up10d4, case when data_type = 'up10d5' then 1 else 0 end as up10d5
+            , case when data_type = 'down10d2' then 1 else 0 end as down10d2, case when data_type = 'down10d3' then 1 else 0 end as down10d3
+            , case when data_type = 'down10d4' then 1 else 0 end as down10d4, case when data_type = 'down10d5' then 1 else 0 end as down10d5
+            , case when data_type = 'updouble25d' then 1 else 0 end as updouble25d, case when data_type = 'downdouble25d' then 1 else 0 end as downdouble25d
+            from d2_trade_cal b left join d2_analyse_everyday_detail a on (a.trade_date = b.cal_date)
+            where b.exchange_id = 'SSE' and b.is_open = 1
+        ) dt
+        group by cal_date
+        order by cal_date
+    </select>
+
+    <select id="select2IndexData" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">
+        select `trade_date`, `close`, `change`, `pct_change`, `vol`, `amount`
+        from d2_index_daily
+        where `ts_code` = #{ts_code} and `trade_date` >= '20000101'
+        order by trade_date
+    </select>
+
+    <select id="select2IndexMinDateByYear" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">
+        select b.`trade_date`, b.`close`, b.`change`, b.`pct_change`, b.`vol`, b.`amount` from
+        (select left(`trade_date`, 4) as 'yyyy', `ts_code`, min(`trade_date`) as 'trade_date'
+        from d2_index_daily
+                where `ts_code` = #{ts_code} and `trade_date` >= '20000101'
+                group by `ts_code`, left(`trade_date`, 4)) a, d2_index_daily b
+        where a.`ts_code` = b.`ts_code` and a.`trade_date` = b.`trade_date`
+        order by b.`trade_date`
+    </select>
+
+    <select id="selectEveryDayTotal" resultMap="EveryDayTotalResultMap">
+        select a.trade_date, round(a.close, 2) as sh_close, round(a.turnover_rate, 2) as sh_turnover_rate, round(a.total_mv, 2) as sh_total_mv,
+        round(b.close, 2) as sz_close, round(b.turnover_rate, 2) as sz_turnover_rate, round(b.total_mv, 2) as sz_total_mv
+        from d2_analyse_everyday_total a, d2_analyse_everyday_total b
+        where a.ts_type = 'SH' and b.ts_type = 'SZ' and a.trade_date = b.trade_date
+        order by a.trade_date
+    </select>
+
+    <select id="selectEveryDayMargin" resultMap="EveryDayMarginResultMap">
+        select a.trade_date, round(a.rzye/100000000,2) as 'sh_rzye', round(b.rzye/100000000,2) as 'sz_rzye', round(a.rqye/100000000,2) as 'sh_rqye', round(b.rqye/100000000,2) as 'sz_rqye'
+        from d2_margin a, d2_margin b
+        where a.exchange_id='SSE' and b.exchange_id='SZSE' and a.trade_date = b.trade_date
+        order by a.trade_date
+    </select>
+
+    <select id="selectEveryDayHsgt" resultMap="EveryDayHsgtResultMap">
+        select b.trade_date, round(sum(a.ggt_ss),2) as 'ggt_ss', round(sum(a.ggt_sz),2) as 'ggt_sz', round(sum(a.hgt),2)
+        as 'hgt', round(sum(a.sgt),2) as 'sgt', round(sum(a.north_money),2) as 'north_money',
+        round(sum(a.south_money),2) as 'south_money'
+        from d2_moneyflow_hsgt a, d2_moneyflow_hsgt b
+        where b.trade_date >= a.trade_date
+        group by b.trade_date
+    </select>
+
+</mapper>

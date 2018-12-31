@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 	xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:tx="http://www.springframework.org/schema/tx"
+          xmlns:aop="http://www.springframework.org/schema/aop"
+          xmlns:context="http://www.springframework.org/schema/context"
+          xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+http://www.springframework.org/schema/aop
+http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-4.2.xsd
+">
+
+    <context:component-scan base-package="com.mp2.analysestock.db.service" />
+
+    <!-- JNDI方式配置数据源 -->
+    <!-- <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="${jndiName}"></property> </bean> -->
+    <!-- ========================================配置数据源========================================= -->
+    <!-- 配置数据源，使用的是alibaba的Druid(德鲁伊)数据源 -->
+    <!-- <bean name="dataSource" class="com.alibaba.druid.pool.DruidDataSource" -->
+
+    <bean id="dataSourceJNDI" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/jdbc/mysql</value>
+        </property>
+    </bean>
+
+    <!-- ========================================针对myBatis的配置项============================== -->
+    <!-- 配置sqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 实例化sqlSessionFactory时需要使用上述配置好的数据源以及SQL映射文件 -->
+        <property name="dataSource" ref="dataSourceJNDI" />
+        <property name="mapperLocations" value="classpath:com/mp2/analysestock/db/map/*.xml" />
+    </bean>
+    <!-- 配置扫描器 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.mp2.analysestock.db.dao" />
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+    </bean>
+
+</beans>
