@@ -79,6 +79,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
     }
 
+    class ChanLine {
+        public int arr_pos;
+        public ChanPoint highPoint;
+        public ChanPoint lowPoint;
+
+        public String toString() {
+            return "Low(" + lowPoint.toString() + ") High(" + highPoint.toString() + ")";
+        }
+    }
+
     class MarkLine {
         public String type = "";
         public String name = "";
@@ -113,23 +123,42 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     }
 
     class AreaCoord {
+        public ItemStyle itemStyle = new ItemStyle();
         public String[] coord = new String[2];
     }
 
-    class EChartsResult_03 {
+    class EChartsResult_K {
         public String[] legend_data;
         public HashMap<String, Boolean> legend_selected;
         public String[] xAxis_data;
-        public double[][] series_data;
+        public double[][] series_data_k; // 开盘(open)，收盘(close)，最低(lowest)，最高(highest)
+        public double[] series_data_vol;
+        public double[] series_data_ema_5;
+        public double[] series_data_ema_10;
+        public double[] series_data_ema_20;
+        public double[] series_data_ema_30;
+        public double[] series_data_ema_250;
+        public double[] series_data_bias_5;
+        public double[] series_data_bias_20;
+        public double[] series_data_macd;
         public List<LineCoord>[] markline_data;
         public List<PointCoord_base> markpoint_data = new ArrayList<>();
         public List<AreaCoord>[] markarea_data;
 
-        public EChartsResult_03(int xCount, int yCount) {
+        public EChartsResult_K(int xCount, int yCount) {
             legend_data = new String[yCount];
             legend_selected = new HashMap();
             xAxis_data = new String[xCount];
-            series_data = new double[yCount][xCount];
+            series_data_k = new double[xCount][4];
+            series_data_vol = new double[xCount];
+            series_data_ema_5 = new double[xCount];
+            series_data_ema_10 = new double[xCount];
+            series_data_ema_20 = new double[xCount];
+            series_data_ema_30 = new double[xCount];
+            series_data_ema_250 = new double[xCount];
+            series_data_bias_5 = new double[xCount];
+            series_data_bias_20 = new double[xCount];
+            series_data_macd = new double[xCount];
         }
     }
 
@@ -465,64 +494,105 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return SUCCESS;
     }
 
+    private int getChanDirection(ChanLine a, ChanLine b) {
+        return getChanDirection(a.highPoint.close_val, a.lowPoint.close_val, b.highPoint.close_val, b.lowPoint.close_val);
+    }
+
     private int getChanDirection(double a1, double a2, double b1, double b2) {
-        int re = 0; // -1 下跌 0 盘整 1 上升
+        int re; // -1 下跌 0 盘整 1 上升
+        double aH, aL, bH, bL;
 
-        // System.out.println(a1 + " " + a2 + " " + b1 + " " + b2);
+        if (a1 > a2) {
+            aH = a1;
+            aL = a2;
+        } else {
+            aH = a2;
+            aL = a1;
+        }
 
+        if (b1 > b2) {
+            bH = b1;
+            bL = b2;
+        } else {
+            bH = b2;
+            bL = b1;
+        }
+
+        if (bH == aH || bL == aL) {
+            re = 0;
+        } else if (bH > aH && bL > aL) {
+            re = 1;
+        } else if (bL < aL && bH < aH) {
+            re = -1;
+        } else {
+            re = 0;
+        }
+
+        /*
         if (b2 > b1) { // B 朝上
             if (a2 > a1) { // A 朝上， B 朝上
-                if (b2 == a2) {
+                if (b2 == a2 || b1 == a1) {
                     re = 0;
                 } else if (b2 > a2) {
-                    re = 1;
-                } else {
-                    if (b1 < a1) {
-                        re = -1;
-                    } else {
+                    if (b1 > a1)
+                        re = 1;
+                    else
                         re = 0;
-                    }
+                } else {
+                    if (b1 < a1)
+                        re = -1;
+                    else
+                        re = 0;
                 }
             } else { // A 朝下， B 朝上
-                if (b2 == a1) {
+                if (b2 == a1 || b1 == a2) {
                     re = 0;
                 } else if (b2 > a1) {
-                    re = 1;
-                } else {
-                    if (b1 < a2) {
-                        re = -1;
-                    } else {
+                    if (b1 > a2)
+                        re = 1;
+                    else
                         re = 0;
-                    }
+                } else {
+                    if (b2 < a1)
+                        re = -1;
+                    else
+                        re = 0;
                 }
             }
         } else { // B 朝下
             if (a2 < a1) { // A 朝下， B 朝下
-                if (b2 == a2) {
+                if (b2 == a2 || a1 == b1) {
                     re = 0;
                 } else if (b2 > a2) {
-                    if (b1 < a1) {
-                        re = 0;
-                    } else {
+                    if (b1 > a1) {
                         re = 1;
+                    } else {
+                        re = 0;
                     }
                 } else {
-                    re = -1;
+                    if (b1 < a1)
+                        re = -1;
+                    else
+                        re = 0;
                 }
             } else { // A 朝上， B 朝下
-                if (b2 == a1) {
+                if (b2 == a1 || b1 == a2) {
                     re = 0;
                 } else if (b2 > a1) {
-                    if (b1 < a2) {
-                        re = 0;
-                    } else {
+                    if (b1 > a2) {
                         re = 1;
+                    } else {
+                        re = 0;
                     }
                 } else {
-                    re = -1;
+                    if (b1 < a2)
+                        re = -1;
+                    else
+                        re = 0;
                 }
             }
         }
+        */
 
         return re;
     }
@@ -583,83 +653,219 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
     }
 
-    private List<ChanPoint> analyseChanPoint(List<D2IndexData> data) {
-        List<ChanPoint> re = new ArrayList<>();
+    private List<ChanPoint> analyseChanPoint(List<D2IndexData> rich_data) {
+        int beforeDirection = 0, nowDirection; // -1 下跌 0 盘整 1 向上
+        D2IndexData beforeItem = null;
+        List<D2IndexData> clear_data = new ArrayList<>();
+
+        if (rich_data.size() > 1) {
+            D2IndexData b = rich_data.get(0);
+            D2IndexData e = rich_data.get(1);
+            if (b.getHigh_val() > e.getHigh_val() && b.getLow_val() > e.getLow_val()) {
+                beforeDirection = -1;
+            } else if (b.getHigh_val() < e.getHigh_val() && b.getLow_val() < e.getLow_val()) {
+                beforeDirection = 1;
+            }
+        }
+
+        // 做包含与合并操作
+        for (int x = 1; x < rich_data.size(); x++) {
+            double a1, a2, b1, b2;
+            D2IndexData b = rich_data.get(x - 1);
+            D2IndexData e = rich_data.get(x);
+
+            if (beforeItem == null) {
+                a1 = b.getLow_val();
+                a2 = b.getHigh_val();
+            } else {
+                a1 = beforeItem.getLow_val();
+                a2 = beforeItem.getHigh_val();
+            }
+
+            b1 = e.getLow_val();
+            b2 = e.getHigh_val();
+
+            nowDirection = getChanDirection(a1, a2, b1, b2);
+
+            switch (nowDirection) {
+                case 1:
+                case -1:
+                    if (beforeItem == null) {
+                        clear_data.add(b);
+                    } else {
+                        clear_data.add(beforeItem);
+                    }
+                    beforeItem = null;
+                    beforeDirection = nowDirection;
+                    break;
+                case 0: // 当前包含盘整
+                    switch (beforeDirection) {
+                        case 1: // 之前上升
+                            if (beforeItem == null) {
+                                beforeItem = new D2IndexData();
+                                beforeItem.setHigh_val(b.getHigh_val() > e.getHigh_val() ? b.getHigh_val() : e.getHigh_val());
+                                beforeItem.setLow_val(b.getLow_val() > e.getLow_val() ? b.getLow_val() : e.getLow_val());
+                                beforeItem.setTrade_date(b.getHigh_val() > e.getHigh_val() ? b.getTrade_date() : e.getTrade_date());
+                            } else {
+                                beforeItem.setHigh_val(beforeItem.getHigh_val() > e.getHigh_val() ? beforeItem.getHigh_val() : e.getHigh_val());
+                                beforeItem.setLow_val(beforeItem.getLow_val() > e.getLow_val() ? beforeItem.getLow_val() : e.getLow_val());
+                                beforeItem.setTrade_date(beforeItem.getHigh_val() > e.getHigh_val() ? beforeItem.getTrade_date() : e.getTrade_date());
+                            }
+                            beforeItem.setOpen_val(beforeItem.getLow_val());
+                            beforeItem.setClose_val(beforeItem.getHigh_val());
+                            break;
+                        case -1: // 之前下跌
+                            if (beforeItem == null) {
+                                beforeItem = new D2IndexData();
+                                beforeItem.setHigh_val(b.getHigh_val() < e.getHigh_val() ? b.getHigh_val() : e.getHigh_val());
+                                beforeItem.setLow_val(b.getLow_val() < e.getLow_val() ? b.getLow_val() : e.getLow_val());
+                                beforeItem.setTrade_date(b.getHigh_val() < e.getHigh_val() ? b.getTrade_date() : e.getTrade_date());
+                            } else {
+                                beforeItem.setHigh_val(beforeItem.getHigh_val() < e.getHigh_val() ? beforeItem.getHigh_val() : e.getHigh_val());
+                                beforeItem.setLow_val(beforeItem.getLow_val() < e.getLow_val() ? beforeItem.getLow_val() : e.getLow_val());
+                                beforeItem.setTrade_date(beforeItem.getHigh_val() < e.getHigh_val() ? beforeItem.getTrade_date() : e.getTrade_date());
+                            }
+                            beforeItem.setOpen_val(beforeItem.getHigh_val());
+                            beforeItem.setClose_val(beforeItem.getLow_val());
+                            break;
+                        case 0: // 之前盘整
+                    }
+            }
+        }
+
+        // System.out.println("ClearPoint0: " + clear_data.get(0).toString());
+        System.out.println("ClearPoint.size: " + clear_data.size());
 
         // 开头
-        if (data.size() > 1) {
-            D2IndexData item = data.get(0);
-            D2IndexData e = data.get(1);
-
-            if (item.getClose_val() > e.getClose_val()) {
-                //判断顶分型
-                ChanPoint t = new ChanPoint();
-                t.tp = 0;
-                t.arr_pos = 0;
-                t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
-            } else {
-                //判断底分型
-                ChanPoint t = new ChanPoint();
-                t.tp = 1;
-                t.arr_pos = 0;
-                t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
-            }
-        }
+        boolean bFindFirst = false;
+        List<ChanPoint> re_pa = new ArrayList<>();
+        D2IndexData firstItem = clear_data.get(0);
+        ChanPoint firstPoint = new ChanPoint();
+        firstPoint.arr_pos = 0;
+        firstPoint.trade_date = firstItem.getTrade_date();
 
         // 中间 找到所有顶底分型
-        for (int x = 1; x < (data.size() - 1); x++) {
-            D2IndexData item = data.get(x);
-            D2IndexData b = data.get(x - 1);
-            D2IndexData e = data.get(x + 1);
+        for (int x = 1; x < (clear_data.size() - 1); x++) {
+            ChanPoint lP = null;
+            D2IndexData item = clear_data.get(x);
+            D2IndexData b = clear_data.get(x - 1);
+            D2IndexData e = clear_data.get(x + 1);
 
-            if (item.getClose_val() > b.getClose_val() && item.getClose_val() > e.getClose_val()) {
+            if (re_pa.size() > 1) {
+                lP = new ChanPoint();
+                lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
+                lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
+                lP.tp = re_pa.get(re_pa.size() - 1).tp;
+                lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
+            }
+            //System.out.println(item.toString());
+
+            if (item.getHigh_val() > b.getHigh_val() && item.getHigh_val() > e.getHigh_val()
+                    && item.getLow_val() > b.getLow_val() && item.getLow_val() > e.getLow_val()) {
                 //判断顶分型
+                //System.out.println("UP");
+                if (bFindFirst == false) {
+                    bFindFirst = true;
+                    firstPoint.tp = 1;
+                    firstPoint.close_val = firstItem.getLow_val();
+                    re_pa.add(firstPoint);
+
+                    lP = new ChanPoint();
+                    lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
+                    lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
+                    lP.tp = re_pa.get(re_pa.size() - 1).tp;
+                    lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
+                }
+
                 ChanPoint t = new ChanPoint();
                 t.tp = 0;
                 t.arr_pos = x;
                 t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
-            } else if (item.getClose_val() < b.getClose_val() && item.getClose_val() < e.getClose_val()) {
+                t.close_val = item.getHigh_val();
+                if (lP != null) {
+                    if (lP.tp != t.tp && Math.abs(lP.arr_pos - t.arr_pos) < 4) {
+                        // 两个顶底之间太近
+                        //System.out.println("lP.arr_pos:" + lP.arr_pos + " t.arr_pos:" + t.arr_pos);
+                    } else if (lP.tp == t.tp) {
+                        // 两个顶过近，取最高的
+                        if (t.close_val >= lP.close_val) {
+                            re_pa.remove(re_pa.size() - 1);
+                            re_pa.add(t);
+                            //System.out.println("Remove -> ADD");
+                        }
+                    } else {
+                        re_pa.add(t);
+                        //System.out.println("ADD");
+                    }
+                } else {
+                    re_pa.add(t);
+                    //System.out.println("ADD");
+                }
+            } else if (item.getLow_val() < b.getLow_val() && item.getLow_val() < e.getLow_val()
+                    && item.getHigh_val() < b.getHigh_val() && item.getHigh_val() < e.getHigh_val()) {
                 //判断底分型
+                //System.out.println("DOWN");
+                if (bFindFirst == false) {
+                    bFindFirst = true;
+                    firstPoint.tp = 0;
+                    firstPoint.close_val = firstItem.getHigh_val();
+                    re_pa.add(firstPoint);
+
+                    lP = new ChanPoint();
+                    lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
+                    lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
+                    lP.tp = re_pa.get(re_pa.size() - 1).tp;
+                    lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
+                }
+
                 ChanPoint t = new ChanPoint();
                 t.tp = 1;
                 t.arr_pos = x;
                 t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
+                t.close_val = item.getLow_val();
+                if (lP != null) {
+                    if (lP.tp != t.tp && Math.abs(lP.arr_pos - t.arr_pos) < 4) {
+                        // 两个顶底之间太近
+                        //System.out.println("lP.arr_pos:" + lP.arr_pos + " t.arr_pos:" + t.arr_pos);
+                    } else if (lP.tp == t.tp) {
+                        // 两个底过近，取最底的
+                        if (t.close_val <= lP.close_val) {
+                            re_pa.remove(re_pa.size() - 1);
+                            re_pa.add(t);
+                            //System.out.println("Remove -> ADD");
+                        }
+                    } else {
+                        re_pa.add(t);
+                        //System.out.println("ADD");
+                    }
+                } else {
+                    re_pa.add(t);
+                    //System.out.println("ADD");
+                }
             }
         }
 
-        // 结尾
-        if (data.size() > 1) {
-            D2IndexData item = data.get(data.size() - 1);
-            D2IndexData b = data.get(data.size() - 2);
+        /*for(int n=0; n<re_pa.size(); n++) {
+            ChanPoint t = re_pa.get(n);
+            System.out.println("PointData " + t.toString());
+        }*/
+        // System.out.println("PreClearPoint0: " + re_pa.get(0).toString());
 
-            if (item.getClose_val() > b.getClose_val()) {
-                //判断顶分型
-                ChanPoint t = new ChanPoint();
-                t.tp = 0;
-                t.arr_pos = data.size() - 1;
-                t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
-            } else if (item.getClose_val() < b.getClose_val()) {
-                //判断底分型
-                ChanPoint t = new ChanPoint();
-                t.tp = 1;
-                t.arr_pos = data.size() - 1;
-                t.trade_date = item.getTrade_date();
-                t.close_val = item.getClose_val();
-                re.add(t);
-            }
+        return re_pa;
+    }
+
+    private ChanLine makeChanLine(ChanPoint point1, ChanPoint point2) {
+        ChanLine line = new ChanLine();
+
+        if (point1.close_val > point2.close_val) {
+            line.highPoint = point1;
+            line.lowPoint = point2;
+        } else {
+            line.highPoint = point2;
+            line.lowPoint = point1;
         }
 
-        return re;
+        return line;
     }
 
     /**
@@ -668,7 +874,139 @@ public class QryAnalyseData extends MP2BaseActionSupport {
      * @param data
      * @return
      */
-    private List<ChanPoint> analyseChanLine(List<ChanPoint> data) {
+    private List<ChanPoint> analyseChanLine_v2(List<ChanPoint> data) {
+        List<ChanPoint> re = new ArrayList<>();
+        ChanLine beforeItem = null;
+        int beforeDirection = 0, nowDirection; // -1 下跌 0 盘整 1 向上
+        List<ChanLine> rich_line = new ArrayList<>();
+        List<ChanLine> clear_line = new ArrayList<>();
+
+        //************ 做线段合并处理 ***************
+        for (int n = 0; n < (data.size() - 1); n += 2) {
+            ChanPoint point1 = data.get(n);
+            ChanPoint point2 = data.get(n + 1);
+            ChanLine line = makeChanLine(point1, point2);
+            rich_line.add(line);
+        }
+
+        // System.out.println("RichLine0: " + rich_line.get(0).toString());
+
+        if (rich_line.size() > 1) {
+            ChanLine b = rich_line.get(0);
+            ChanLine e = rich_line.get(1);
+            if (b.highPoint.close_val > e.highPoint.close_val && b.lowPoint.close_val > e.lowPoint.close_val) {
+                beforeDirection = -1;
+            } else if (b.highPoint.close_val < e.highPoint.close_val && b.lowPoint.close_val < e.lowPoint.close_val) {
+                beforeDirection = 1;
+            }
+        }
+
+        // 做包含与合并操作
+        for (int x = 1; x < rich_line.size(); x++) {
+            double a1, a2, b1, b2;
+            ChanLine b = rich_line.get(x - 1);
+            ChanLine e = rich_line.get(x);
+
+            if (beforeItem == null) {
+                a1 = b.lowPoint.close_val;
+                a2 = b.highPoint.close_val;
+            } else {
+                a1 = beforeItem.lowPoint.close_val;
+                a2 = beforeItem.highPoint.close_val;
+            }
+
+            b1 = e.lowPoint.close_val;
+            b2 = e.highPoint.close_val;
+
+            nowDirection = getChanDirection(a1, a2, b1, b2);
+
+            switch (nowDirection) {
+                case 1:
+                case -1:
+                    if (beforeItem == null) {
+                        clear_line.add(b);
+                    } else {
+                        clear_line.add(beforeItem);
+                    }
+                    beforeItem = null;
+                    beforeDirection = nowDirection;
+                    break;
+                case 0: // 当前包含盘整
+                    switch (beforeDirection) {
+                        case 1: // 之前上升
+                            if (beforeItem == null) {
+                                beforeItem = new ChanLine();
+                                beforeItem.highPoint = (b.highPoint.close_val > e.highPoint.close_val ? b.highPoint : e.highPoint);
+                                beforeItem.lowPoint = (b.lowPoint.close_val > e.lowPoint.close_val ? b.lowPoint : e.lowPoint);
+                            } else {
+                                beforeItem.highPoint = (beforeItem.highPoint.close_val > e.highPoint.close_val ? beforeItem.highPoint : e.highPoint);
+                                beforeItem.lowPoint = (beforeItem.lowPoint.close_val > e.lowPoint.close_val ? beforeItem.lowPoint : e.lowPoint);
+                            }
+                            break;
+                        case -1: // 之前下跌
+                            if (beforeItem == null) {
+                                beforeItem = new ChanLine();
+                                beforeItem.highPoint = (b.highPoint.close_val < e.highPoint.close_val ? b.highPoint : e.highPoint);
+                                beforeItem.lowPoint = (b.lowPoint.close_val < e.lowPoint.close_val ? b.lowPoint : e.lowPoint);
+                            } else {
+                                beforeItem.highPoint = (beforeItem.highPoint.close_val < e.highPoint.close_val ? beforeItem.highPoint : e.highPoint);
+                                beforeItem.lowPoint = (beforeItem.lowPoint.close_val < e.lowPoint.close_val ? beforeItem.lowPoint : e.lowPoint);
+                            }
+                            break;
+                        case 0: // 之前盘整
+                    }
+            }
+        }
+
+        // System.out.println("ClearLine: " + clear_line.size());
+
+        //************ 做线段趋势处理 ***************
+        // 开头
+        boolean bFindFirst = false;
+        ChanLine firstLine = clear_line.get(0);
+        //System.out.println("CleanLine0: " + clear_line.get(0).toString());
+
+        firstLine.arr_pos = 0;
+
+        // 中间 找到所有顶底分型
+        for (int x = 1; x < (clear_line.size() - 1); x++) {
+            ChanLine item = clear_line.get(x);
+            ChanLine b = clear_line.get(x - 1);
+            ChanLine e = clear_line.get(x + 1);
+
+            if (item.highPoint.close_val > b.highPoint.close_val && item.highPoint.close_val > e.highPoint.close_val
+                    && item.lowPoint.close_val > b.lowPoint.close_val && item.lowPoint.close_val > e.lowPoint.close_val) {
+                //判断顶分型
+                //System.out.println("UP");
+                if (bFindFirst == false) {
+                    bFindFirst = true;
+                    re.add(firstLine.lowPoint);
+                }
+
+                ChanPoint t = item.highPoint;
+                t.arr_pos = x;
+                re.add(t);
+            } else if (item.lowPoint.close_val < b.lowPoint.close_val && item.lowPoint.close_val < e.lowPoint.close_val
+                    && item.highPoint.close_val < b.highPoint.close_val && item.highPoint.close_val < e.highPoint.close_val) {
+                //判断底分型
+                //System.out.println("DOWN");
+                if (bFindFirst == false) {
+                    bFindFirst = true;
+                    re.add(firstLine.highPoint);
+                }
+
+                ChanPoint t = item.lowPoint;
+                t.arr_pos = x;
+                re.add(t);
+            }
+        }
+
+        System.out.println("ChanLine0: " + re.get(0).toString());
+
+        return re;
+    }
+
+/*    private List<ChanPoint> analyseChanLine(List<ChanPoint> data) {
         List<ChanPoint> ok = new ArrayList<>();
 
         if (data.size() > 4) {
@@ -813,7 +1151,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
 
         // 清理重复数据
-        List<ChanPoint> cl = new ArrayList<>();
+        List<ChanPoint> re_p0 = new ArrayList<>();
         ChanPoint temP = null;
         for (int n = 0; n < ok.size(); n++) {
             if (n == 0) {
@@ -824,7 +1162,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 temP.tp = ok.get(0).tp;
             } else if (n < (ok.size() - 1)) {
                 if (temP != null && temP.trade_date != ok.get(n).trade_date) {
-                    cl.add(temP);
+                    re_p0.add(temP);
                     //System.out.println("Add " + temP.trade_date);
                     temP = new ChanPoint();
                     temP.trade_date = ok.get(n).trade_date;
@@ -838,25 +1176,25 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 temP.close_val = ok.get(n).close_val;
                 temP.arr_pos = ok.get(n).arr_pos;
                 temP.tp = ok.get(n).tp;
-                cl.add(temP);
+                re_p0.add(temP);
                 // System.out.println("Add " + temP.trade_date);
             }
         }
 
         // 过滤掉不符合一笔的数据(1.两个顶底之间小于3个，并且前后方向一致)
-        List<ChanPoint> re = new ArrayList<>();
-        if (cl.size() > 0) {
-            re.add(cl.get(0));
+        List<ChanPoint> re_p1 = new ArrayList<>();
+        if (re_p0.size() > 0) {
+            re_p1.add(re_p0.get(0));
         }
         int ratio = 2;
-        if ((cl.size() / 2) == 1) {// 是否为"奇数"
+        if ((re_p0.size() / 2) == 1) {// 是否为"奇数"
             ratio = 3;
         }
-        for (int n = 1; n < (cl.size() - ratio); n++) {
-            ChanPoint mP1 = cl.get(n);
-            ChanPoint mP2 = cl.get(n + 1);
-            ChanPoint bP = cl.get(n - 1);
-            ChanPoint eP = cl.get(n + 2);
+        for (int n = 1; n < (re_p0.size() - ratio); n++) {
+            ChanPoint mP1 = re_p0.get(n);
+            ChanPoint mP2 = re_p0.get(n + 1);
+            ChanPoint bP = re_p0.get(n - 1);
+            ChanPoint eP = re_p0.get(n + 2);
             if (Math.abs(mP1.arr_pos - mP2.arr_pos) < 4
                     && Math.abs(mP2.arr_pos - eP.arr_pos) >= 4
                     && Math.abs(mP1.arr_pos - bP.arr_pos) >= 4) {
@@ -867,18 +1205,33 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                     // 符合简化过滤条件：两个顶底之间小于3个，并且前后方向一致
                     n++;
                 } else {
-                    re.add(cl.get(n));
+                    re_p1.add(re_p0.get(n));
                 }
             } else {
-                re.add(cl.get(n));
+                re_p1.add(re_p0.get(n));
             }
         }
-        for (int n = (cl.size() - ratio); n < cl.size(); n++) {
-            re.add(cl.get(n));
+        for (int n = (re_p0.size() - ratio); n < re_p0.size(); n++) {
+            re_p1.add(re_p0.get(n));
         }
 
-        return re;
-    }
+        // 过滤掉不符合顶、底、顶、底这样规则的多余数据
+        List<ChanPoint> re_p2 = new ArrayList<>();
+        ChanPoint beforePoint = re_p1.get(0);
+        if (re_p1.size() > 1) {
+            beforePoint = re_p1.get(0);
+            re_p2.add(beforePoint);
+        }
+        for (int n = 1; n < re_p1.size(); n++) {
+            ChanPoint item = re_p1.get(n);
+            if (item.tp != beforePoint.tp) {
+                re_p2.add(item);
+                beforePoint = item;
+            }
+        }
+
+        return re_p2;
+    }*/
 
     /**
      * 计算乖离率
@@ -901,6 +1254,10 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     private class Point {
         public String trade_date;
         public double close_val;
+
+        public String toString() {
+            return "P: " + trade_date + "|" + close_val;
+        }
     }
 
     private Point coord2Point(String[] coord) {
@@ -912,6 +1269,30 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return re;
     }
 
+    private void getAddArea(Point beforeZD, Point beforeZG, List<AreaCoord> re) {
+        if (beforeZD != null && beforeZG != null) {
+            if (Integer.parseInt(beforeZD.trade_date) > Integer.parseInt(beforeZG.trade_date)) {
+                AreaCoord area1 = new AreaCoord();
+                area1.coord[0] = beforeZG.trade_date;
+                area1.coord[1] = beforeZG.close_val + "";
+                re.add(area1);
+                AreaCoord area2 = new AreaCoord();
+                area2.coord[0] = beforeZD.trade_date;
+                area2.coord[1] = beforeZD.close_val + "";
+                re.add(area2);
+            } else {
+                AreaCoord area1 = new AreaCoord();
+                area1.coord[0] = beforeZD.trade_date;
+                area1.coord[1] = beforeZD.close_val + "";
+                re.add(area1);
+                AreaCoord area2 = new AreaCoord();
+                area2.coord[0] = beforeZG.trade_date;
+                area2.coord[1] = beforeZG.close_val + "";
+                re.add(area2);
+            }
+        }
+    }
+
     /**
      * 线段 分析 区域
      *
@@ -920,8 +1301,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
      */
     private List<AreaCoord> analyseChanArea(List<LineCoord>[] arrLine) {
         int continueCount = 0;
-        Point t, a1, a2, b1, b2, c1, c2, d1, d2, zd, zg;
+        String beforeLastTradeDate = "", nowFirstTradeDate = "";
+        Point t, a1, a2, b1, b2, c1, c2, d1, d2, zd, zg, beforeZD = null, beforeZG = null;
         List<AreaCoord> re = new ArrayList<>();
+
+        /*for (int n = 0; n < arrLine.length; n++) {
+            List<LineCoord> aL = arrLine[n];
+            a1 = coord2Point(aL.get(0).coord);
+            a2 = coord2Point(aL.get(1).coord);
+            System.out.println("Line: " + a1 + " " + a2);
+        }*/
 
         for (int n = 3; n < arrLine.length; n++) {
             List<LineCoord> aL = arrLine[n - 3];
@@ -959,42 +1348,66 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 d2 = t;
             }
 
-            if ((a1.close_val == b1.close_val && b2.close_val == c2.close_val && c1.close_val == d1.close_val && a1.close_val < d2.close_val && a2.close_val > d1.close_val)
-                    || (a2.close_val == b2.close_val && b1.close_val == c1.close_val && c2.close_val == d2.close_val && a2.close_val > d1.close_val && a1.close_val < d2.close_val)) {
-                // 低点,高点,低点 或者 高点,低点,高点 并且有重合
-                zd = a1.close_val > b1.close_val ? a1 : b1;
-                zg = a2.close_val > b2.close_val ? b2 : a2;
-                zd = zd.close_val > c1.close_val ? zd : c1;
-                zg = zg.close_val > c2.close_val ? c2 : zg;
-                zd = zd.close_val > d1.close_val ? zd : d1;
-                zg = zg.close_val > d2.close_val ? d2 : zg;
-                continueCount++;
-
-                if (continueCount == 1) {
-                    if (Integer.parseInt(zd.trade_date) > Integer.parseInt(zg.trade_date)) {
-                        AreaCoord area1 = new AreaCoord();
-                        area1.coord[0] = zg.trade_date;
-                        area1.coord[1] = zg.close_val + "";
-                        re.add(area1);
-                        AreaCoord area2 = new AreaCoord();
-                        area2.coord[0] = zd.trade_date;
-                        area2.coord[1] = zd.close_val + "";
-                        re.add(area2);
-                    } else {
-                        AreaCoord area1 = new AreaCoord();
-                        area1.coord[0] = zd.trade_date;
-                        area1.coord[1] = zd.close_val + "";
-                        re.add(area1);
-                        AreaCoord area2 = new AreaCoord();
-                        area2.coord[0] = zg.trade_date;
-                        area2.coord[1] = zg.close_val + "";
-                        re.add(area2);
-                    }
-                }
-            } else {
-                continueCount = 0;
+            if (beforeLastTradeDate.length() == 0) {
+                beforeLastTradeDate = a1.trade_date;
             }
 
+            if (Integer.parseInt(a1.trade_date) > Integer.parseInt(a2.trade_date)) {
+                nowFirstTradeDate = a2.trade_date;
+            } else {
+                nowFirstTradeDate = a1.trade_date;
+            }
+
+            if (continueCount == 0 && Integer.parseInt(beforeLastTradeDate) <= Integer.parseInt(nowFirstTradeDate) &&
+                    ((a1.close_val == b1.close_val && b2.close_val == c2.close_val && c1.close_val == d1.close_val && a1.close_val < d2.close_val && a2.close_val > d1.close_val)
+                            || (a2.close_val == b2.close_val && b1.close_val == c1.close_val && c2.close_val == d2.close_val && a2.close_val > d1.close_val && a1.close_val < d2.close_val))) {
+                // 低点,高点,低点 或者 高点,低点,高点 并且有重合
+                zd = a1.close_val > b1.close_val ? a1 : b1;
+                zd = zd.close_val > c1.close_val ? zd : c1;
+                zd = zd.close_val > d1.close_val ? zd : d1;
+
+                zg = a2.close_val > b2.close_val ? b2 : a2;
+                zg = zg.close_val > c2.close_val ? c2 : zg;
+                zg = zg.close_val > d2.close_val ? d2 : zg;
+
+                if (Integer.parseInt(a1.trade_date) > Integer.parseInt(a2.trade_date)) {
+                    zd.trade_date = a1.trade_date;
+                    zg.trade_date = d1.trade_date;
+                } else {
+                    zd.trade_date = a2.trade_date;
+                    zg.trade_date = d2.trade_date;
+                }
+
+                continueCount = 1;
+                beforeZD = zd;
+                beforeZG = zg;
+
+            } else if (continueCount > 0) {
+                // 之前有中枢，判断当前线段是否进入中枢
+                if (d1.close_val <= beforeZG.close_val && d2.close_val >= beforeZD.close_val) {
+                    if (Integer.parseInt(d1.trade_date) > Integer.parseInt(d2.trade_date)) {
+                        beforeZG.trade_date = d2.trade_date;
+                    } else {
+                        beforeZG.trade_date = d1.trade_date;
+                    }
+                    beforeLastTradeDate = beforeZG.trade_date;
+                    continueCount++;
+                } else {
+                    getAddArea(beforeZD, beforeZG, re);
+                    continueCount = 0;
+                    beforeZD = null;
+                    beforeZG = null;
+                }
+            } else {
+                getAddArea(beforeZD, beforeZG, re);
+                continueCount = 0;
+                beforeZD = null;
+                beforeZG = null;
+            }
+        }
+
+        if (continueCount > 0 && beforeZD != null && beforeZG != null) {
+            getAddArea(beforeZD, beforeZG, re);
         }
 
         return re;
@@ -1020,14 +1433,17 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             index_data = dAnalyseStockService.select2IndexData(param);
             index_mindate_year = dAnalyseStockService.select2IndexMinDateByYear(param);
 
-            String[] legend = {ts_name, "EMA:5", "EMA:20", "EMA:250", "BIAS:5", "BIAS:20", "MACD"};
-            EChartsResult_03 eChartsResult = new EChartsResult_03(index_data.size(), legend.length);
+            String[] legend = {ts_name, "成交量", "EMA:5", "EMA:10", "EMA:20", "EMA:30", "EMA:250", "BIAS:5", "BIAS:20", "MACD"};
+            EChartsResult_K eChartsResult = new EChartsResult_K(index_data.size(), legend.length - 1);
 
             eChartsResult.legend_data = legend.clone();
             eChartsResult.legend_selected.clear();
             eChartsResult.legend_selected.put(ts_name, true);
+            eChartsResult.legend_selected.put("成交量", false);
             eChartsResult.legend_selected.put("EMA:5", false);
+            eChartsResult.legend_selected.put("EMA:10", false);
             eChartsResult.legend_selected.put("EMA:20", false);
+            eChartsResult.legend_selected.put("EMA:30", true);
             eChartsResult.legend_selected.put("EMA:250", false);
             eChartsResult.legend_selected.put("BIAS:5", false);
             eChartsResult.legend_selected.put("BIAS:20", false);
@@ -1035,44 +1451,63 @@ public class QryAnalyseData extends MP2BaseActionSupport {
 
             // 填充指数数据
             for (int x = 0; x < index_data.size(); x++) {
-                D2IndexData item_000852 = index_data.get(x);
+                D2IndexData item = index_data.get(x);
 
-                eChartsResult.xAxis_data[x] = item_000852.getTrade_date();
-                eChartsResult.series_data[0][x] = item_000852.getClose_val();
+                eChartsResult.xAxis_data[x] = item.getTrade_date();
+                eChartsResult.series_data_k[x][0] = item.getOpen_val();
+                eChartsResult.series_data_k[x][1] = item.getClose_val();
+                eChartsResult.series_data_k[x][2] = item.getLow_val();
+                eChartsResult.series_data_k[x][3] = item.getHigh_val();
+                eChartsResult.series_data_vol[x] = item.getVolume_val();
             }
 
             // 计算均线、BIAS、MACD  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             Core taLibCore = new Core();
             MInteger taLibBegin = new MInteger();
             MInteger taLibLength = new MInteger();
+            double[] close_val_data = new double[eChartsResult.series_data_k.length];
+
+            for (int n = 0; n < close_val_data.length; n++) {
+                close_val_data[n] = eChartsResult.series_data_k[n][1];
+            }
 
             int cha;
-            double[] taLibOut = new double[eChartsResult.series_data[0].length];
-            taLibCore.ema(0, eChartsResult.series_data[0].length - 1, eChartsResult.series_data[0], 5, taLibBegin, taLibLength, taLibOut);
+            double[] taLibOut = new double[eChartsResult.series_data_k.length];
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 5, taLibBegin, taLibLength, taLibOut);
             for (int x = 0; x < taLibLength.value; x++) {
-                cha = eChartsResult.series_data[1].length - taLibLength.value;
-                eChartsResult.series_data[1][x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+                cha = eChartsResult.series_data_ema_5.length - taLibLength.value;
+                eChartsResult.series_data_ema_5[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+                // BIAS 5 Day
+                eChartsResult.series_data_bias_5[x + cha] = bias(eChartsResult.series_data_ema_5[x + cha], eChartsResult.series_data_k[x + cha][2]);
+            }
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 20, taLibBegin, taLibLength, taLibOut);
+            for (int x = 0; x < taLibLength.value; x++) {
+                cha = eChartsResult.series_data_ema_20.length - taLibLength.value;
+                eChartsResult.series_data_ema_20[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
                 // BIAS
-                eChartsResult.series_data[4][x + cha] = bias(eChartsResult.series_data[1][x + cha], eChartsResult.series_data[0][x + cha]);
+                eChartsResult.series_data_bias_20[x + cha] = bias(eChartsResult.series_data_ema_20[x + cha], eChartsResult.series_data_k[x + cha][2]);
             }
-            taLibCore.ema(0, eChartsResult.series_data[0].length - 1, eChartsResult.series_data[0], 20, taLibBegin, taLibLength, taLibOut);
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 10, taLibBegin, taLibLength, taLibOut);
             for (int x = 0; x < taLibLength.value; x++) {
-                cha = eChartsResult.series_data[2].length - taLibLength.value;
-                eChartsResult.series_data[2][x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
-                // BIAS
-                eChartsResult.series_data[5][x + cha] = bias(eChartsResult.series_data[2][x + cha], eChartsResult.series_data[0][x + cha]);
+                cha = eChartsResult.series_data_ema_10.length - taLibLength.value;
+                eChartsResult.series_data_ema_10[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
             }
-            taLibCore.ema(0, eChartsResult.series_data[0].length - 1, eChartsResult.series_data[0], 250, taLibBegin, taLibLength, taLibOut);
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 30, taLibBegin, taLibLength, taLibOut);
             for (int x = 0; x < taLibLength.value; x++) {
-                cha = eChartsResult.series_data[3].length - taLibLength.value;
-                eChartsResult.series_data[3][x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+                cha = eChartsResult.series_data_ema_30.length - taLibLength.value;
+                eChartsResult.series_data_ema_30[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
             }
-            double[] taLibOutMACD = new double[eChartsResult.series_data[0].length];
-            double[] taLibOutMACDSignal = new double[eChartsResult.series_data[0].length];
-            double[] taLibOutMACDHist = new double[eChartsResult.series_data[0].length];
-            taLibCore.macd(0, eChartsResult.series_data[0].length - 1, eChartsResult.series_data[0], 12, 26, 9, taLibBegin, taLibLength, taLibOutMACD, taLibOutMACDSignal, taLibOutMACDHist);
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 250, taLibBegin, taLibLength, taLibOut);
             for (int x = 0; x < taLibLength.value; x++) {
-                eChartsResult.series_data[6][x + (eChartsResult.series_data[6].length - taLibLength.value)] = (double) Math.round(taLibOutMACDHist[x] * 100) / 100;
+                cha = eChartsResult.series_data_ema_250.length - taLibLength.value;
+                eChartsResult.series_data_ema_250[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+            }
+            double[] taLibOutMACD = new double[close_val_data.length];
+            double[] taLibOutMACDSignal = new double[close_val_data.length];
+            double[] taLibOutMACDHist = new double[close_val_data.length];
+            taLibCore.macd(0, close_val_data.length - 1, close_val_data, 12, 26, 9, taLibBegin, taLibLength, taLibOutMACD, taLibOutMACDSignal, taLibOutMACDHist);
+            for (int x = 0; x < taLibLength.value; x++) {
+                eChartsResult.series_data_macd[x + (eChartsResult.series_data_macd.length - taLibLength.value)] = (double) Math.round(taLibOutMACDHist[x] * 100) / 100;
             }
 
             // 标记超涨、超跌
@@ -1107,35 +1542,35 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                     bias5_20_down = -10;
             }
             for (int x = 0; x < eChartsResult.xAxis_data.length; x++) {
-                if ((eChartsResult.series_data[4][x] + eChartsResult.series_data[5][x]) <= bias5_20_down) {
+                if ((eChartsResult.series_data_bias_5[x] + eChartsResult.series_data_bias_20[x]) <= bias5_20_down) {
                     PointCoord_base p = new PointCoord_base();
                     p.coord[0] = eChartsResult.xAxis_data[x];
-                    p.coord[1] = eChartsResult.series_data[0][x] + "";
+                    p.coord[1] = eChartsResult.series_data_k[x][2] + "";
                     p.symbol = "arrow";
                     p.itemStyle.color = "#660000"; // 红
                     eChartsResult.markpoint_data.add(p);
-                } else if (eChartsResult.series_data[4][x] <= bias5_down && eChartsResult.series_data[5][x] < bias20_down) {
+                } else if (eChartsResult.series_data_bias_5[x] <= bias5_down && eChartsResult.series_data_bias_20[x] < bias20_down) {
                     PointCoord_base p = new PointCoord_base();
                     p.coord[0] = eChartsResult.xAxis_data[x];
-                    p.coord[1] = eChartsResult.series_data[0][x] + "";
+                    p.coord[1] = eChartsResult.series_data_k[x][2] + "";
                     p.symbol = "arrow";
                     p.itemStyle.color = "#FFCC66"; // 橙
                     eChartsResult.markpoint_data.add(p);
-                } else if ((eChartsResult.series_data[4][x] + eChartsResult.series_data[5][x]) >= bias5_20_up) {
+                } /*else if ((eChartsResult.series_data_bias_5[x] + eChartsResult.series_data_bias_20[x]) >= bias5_20_up) {
                     PointCoord_base p = new PointCoord_base();
                     p.coord[0] = eChartsResult.xAxis_data[x];
-                    p.coord[1] = eChartsResult.series_data[0][x] + "";
+                    p.coord[1] = eChartsResult.series_data_k[x][1] + "";
                     p.symbol = "arrow";
                     p.itemStyle.color = "#009966"; // 绿
                     eChartsResult.markpoint_data.add(p);
-                } else if (eChartsResult.series_data[5][x] >= bias20_up) {
+                } else if (eChartsResult.series_data_bias_20[x] >= bias20_up) {
                     PointCoord_base p = new PointCoord_base();
                     p.coord[0] = eChartsResult.xAxis_data[x];
-                    p.coord[1] = eChartsResult.series_data[0][x] + "";
+                    p.coord[1] = eChartsResult.series_data_k[x][1] + "";
                     p.symbol = "arrow";
                     p.itemStyle.color = "#CCFF66"; // 浅绿
                     eChartsResult.markpoint_data.add(p);
-                }
+                }*/
             }
 
             // 标记每年开始的第一个交易日 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1143,7 +1578,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 D2IndexData item = index_mindate_year.get(x);
                 PointCoord_t1 p = new PointCoord_t1();
                 p.coord[0] = item.getTrade_date();
-                p.coord[1] = item.getClose_val() + "";
+                p.coord[1] = item.getHigh_val() + "";
                 p.symbol = "pin";
                 p.symbolSize = 20;
                 p.value = Double.parseDouble(item.getTrade_date().substring(0, 4));
@@ -1152,98 +1587,140 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
 
             // 处理线段 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            List<ChanPoint> listChanPoint = analyseChanPoint(index_data);
-            List<ChanPoint> listChanLine_1 = analyseChanLine(listChanPoint);
-            // List<ChanPoint> listChanLine_2 = analyseChanLine(listChanLine_1);
+            List<ChanPoint> listChanLine_1f = analyseChanPoint(index_data);
+            System.out.println("ChanLine_1f.size: " + listChanLine_1f.size());
+            List<ChanPoint> listChanLine_5f = analyseChanLine_v2(listChanLine_1f);
+            System.out.println("ChanLine_5f.size: " + listChanLine_5f.size());
+            //List<ChanPoint> listChanLine_30f = analyseChanLine_v2(listChanLine_5f);
+            //System.out.println("ChanLine_30f.size: " + listChanLine_30f.size());
+
             index_data.clear();
-            listChanPoint.clear();
-            /*
-            for (int x = (listChanPoint.size() - 8); x < listChanPoint.size(); x++) {
-                ChanPoint item = listChanPoint.get(x);
-                PointCoord p = new PointCoord();
-                //p.value = (double) Math.round(item.close_val * 100) / 100;
+
+            // 标注 顶底 分型
+            for (int x = 0; x < listChanLine_1f.size(); x++) {
+                ChanPoint item = listChanLine_1f.get(x);
+                PointCoord_base p = new PointCoord_base();
+                p.symbolSize = 6;
+                p.itemStyle.color = "#FF3399";
                 p.coord[0] = item.trade_date;
                 p.coord[1] = item.close_val + "";
                 eChartsResult.markpoint_data.add(p);
-            }*/
+            }
 
-            int index = 0;
-            double sum_val;
-            // eChartsResult.markline_data = new List[listChanLine_1.size() - 1 + listChanLine_2.size() - 1];
-            eChartsResult.markline_data = new List[listChanLine_1.size() - 1];
-            // System.out.println("listChanLine.size()=" + listChanLine.size());
-            // 一级线段
-            for (int x = 1; x < listChanLine_1.size(); x++) {
-                ChanPoint itemEnd = listChanLine_1.get(x);
-                ChanPoint itemFrom = listChanLine_1.get(x - 1);
-                // System.out.println("L1: " + itemFrom.trade_date + " => " + itemEnd.trade_date);
+            int index;
+            //double sum_val;
+            List<LineCoord>[] markline_1f = new List[listChanLine_1f.size() - 1];
+            List<LineCoord>[] markline_5f = new List[listChanLine_5f.size() - 1];
+            eChartsResult.markline_data = new List[markline_5f.length + markline_1f.length];
+            // 1F级线段
+            index = 0;
+            for (int x = 1; x < listChanLine_1f.size(); x++) {
+                ChanPoint itemEnd = listChanLine_1f.get(x);
+                ChanPoint itemFrom = listChanLine_1f.get(x - 1);
                 List<LineCoord> listP = new ArrayList<>();
                 LineCoord p1 = new LineCoord();
                 LineCoord p2 = new LineCoord();
+
+                p1.coord[0] = itemFrom.trade_date;
+                p1.coord[1] = itemFrom.close_val + "";
+                p1.lineStyle.color = "#CCCCCC";
+                p2.coord[0] = itemEnd.trade_date;
+                p2.coord[1] = itemEnd.close_val + "";
+                p2.lineStyle.color = "#CCCCCC";
+
+                listP.add(p1);
+                listP.add(p2);
+                markline_1f[index] = listP;
+                eChartsResult.markline_data[index] = listP;
+                index++;
+            }
+            listChanLine_1f.clear();
+
+            // 5F级线段
+            for (int x = 1; x < listChanLine_5f.size(); x++) {
+                ChanPoint itemEnd = listChanLine_5f.get(x);
+                ChanPoint itemFrom = listChanLine_5f.get(x - 1);
+                // System.out.println("L_f5: " + itemFrom.trade_date + " => " + itemEnd.trade_date);
+                List<LineCoord> listP = new ArrayList<>();
+                LineCoord p1 = new LineCoord();
+                LineCoord p2 = new LineCoord();
+
                 p1.coord[0] = itemFrom.trade_date;
                 p1.coord[1] = itemFrom.close_val + "";
                 p1.lineStyle.color = "#9999ff";
                 p2.coord[0] = itemEnd.trade_date;
                 p2.coord[1] = itemEnd.close_val + "";
                 p2.lineStyle.color = "#9999ff";
-                sum_val = 0;
+                /*sum_val = 0;
                 for (int t = itemFrom.arr_pos; t < itemEnd.arr_pos; t++) {
-                    sum_val += eChartsResult.series_data[6][t];
+                    sum_val += eChartsResult.series_data_val[t];
                 }
+                sum_val = sum_val / 10000;
                 p1.value = (double) Math.round(sum_val * 100) / 100;
                 p2.value = p1.value;
                 if (x >= listChanLine_1.size() - 6) {
                     p1.label.show = true;
                     p2.label.show = true;
-                }
+                }*/
 
                 listP.add(p1);
                 listP.add(p2);
-                eChartsResult.markline_data[index++] = listP;
+                markline_5f[index - markline_1f.length] = listP;
+                eChartsResult.markline_data[index] = listP;
+                index++;
             }
-            listChanLine_1.clear();
-            // 二级线段
-            /*
-            for (int x = 1; x < listChanLine_2.size(); x++) {
-                ChanPoint itemEnd = listChanLine_2.get(x);
-                ChanPoint itemFrom = listChanLine_2.get(x - 1);
-                // System.out.println("L2: " + itemFrom.trade_date + " => " + itemEnd.trade_date);
+            listChanLine_5f.clear();
+
+            /*// 30F级线段
+            for (int x = 1; x < listChanLine_30f.size(); x++) {
+                ChanPoint itemEnd = listChanLine_30f.get(x);
+                ChanPoint itemFrom = listChanLine_30f.get(x - 1);
                 List<LineCoord> listP = new ArrayList<>();
                 LineCoord p1 = new LineCoord();
                 LineCoord p2 = new LineCoord();
+
                 p1.coord[0] = itemFrom.trade_date;
                 p1.coord[1] = itemFrom.close_val + "";
-                p1.lineStyle.color = "#ffcc33";
+                p1.lineStyle.color = "#FF3333";
                 p2.coord[0] = itemEnd.trade_date;
                 p2.coord[1] = itemEnd.close_val + "";
-                p2.lineStyle.color = "#ffcc33";
-                sum_val = 0;
-                for (int t = itemFrom.arr_pos; t < itemEnd.arr_pos; t++) {
-                    sum_val += eChartsResult.series_data[6][t];
-                }
-                p1.value = (double) Math.round(sum_val * 100) / 100;
-                p2.value = p1.value;
+                p2.lineStyle.color = "#FF3333";
 
                 listP.add(p1);
                 listP.add(p2);
                 eChartsResult.markline_data[index++] = listP;
             }
-            listChanLine_2.clear();
-            */
+            listChanLine_30f.clear();*/
 
             // 处理区域 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             index = 0;
-            List<AreaCoord> listAreaCoord = analyseChanArea(eChartsResult.markline_data);
-            System.out.println("listAreaCoord.size(): " + listAreaCoord.size());
-            eChartsResult.markarea_data = new List[listAreaCoord.size() / 2];
-            for (int x = 0; x < listAreaCoord.size() - 1; x += 2) {
+            List<AreaCoord> listAreaCoord_1f = analyseChanArea(markline_1f);
+            List<AreaCoord> listAreaCoord_5f = analyseChanArea(markline_5f);
+            System.out.println("listAreaCoord_1f.size(): " + listAreaCoord_1f.size());
+            System.out.println("listAreaCoord_5f.size(): " + listAreaCoord_5f.size());
+            eChartsResult.markarea_data = new List[listAreaCoord_1f.size() / 2 + listAreaCoord_5f.size() / 2];
+            for (int x = 0; x < listAreaCoord_1f.size() - 1; x += 2) {
                 List<AreaCoord> listP = new ArrayList<>();
-                AreaCoord p1 = listAreaCoord.get(x);
-                AreaCoord p2 = listAreaCoord.get(x + 1);
+                AreaCoord p1 = listAreaCoord_1f.get(x);
+                AreaCoord p2 = listAreaCoord_1f.get(x + 1);
+                p1.itemStyle.color = "rgba(255, 204, 204, 0.8)";
+                p2.itemStyle.color = "rgba(255, 204, 204, 0.8)";
                 listP.add(p1);
                 listP.add(p2);
                 eChartsResult.markarea_data[index++] = listP;
             }
+            listAreaCoord_1f.clear();
+            for (int x = 0; x < listAreaCoord_5f.size() - 1; x += 2) {
+                List<AreaCoord> listP = new ArrayList<>();
+                AreaCoord p1 = listAreaCoord_5f.get(x);
+                AreaCoord p2 = listAreaCoord_5f.get(x + 1);
+                p1.itemStyle.color = "rgba(255, 51, 153, 0.05)";
+                p2.itemStyle.color = "rgba(255, 51, 153, 0.05)";
+                listP.add(p1);
+                listP.add(p2);
+                eChartsResult.markarea_data[index++] = listP;
+            }
+            listAreaCoord_5f.clear();
 
             try {
                 objMapper.writeValue(witStr, eChartsResult);

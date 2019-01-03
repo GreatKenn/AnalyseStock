@@ -104,7 +104,10 @@
                         {
                             scale: true,
                             splitArea: {
-                                show: true
+                                show: false
+                            },
+                            splitLine: {
+                                show: false
                             }
                         },
                         {
@@ -133,8 +136,9 @@
                     series: [
                         {
                             name: '中证1000',
-                            type: 'line',
+                            type: 'candlestick',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     color: 'red',
@@ -142,7 +146,7 @@
                                     type: 'dotted'
                                 }
                             },
-                            data: svr_data.series_data[0],
+                            data: svr_data.series_data_k,
                             markPoint: {
                                 animation: false,
                                 data: svr_data.markpoint_data
@@ -167,10 +171,11 @@
                             },
                             markArea: {
                                 silent: true,
+                                animation: false,
                                 itemStyle: {
                                     normal: {
                                         color: 'transparent',
-                                        borderWidth: 1,
+                                        borderWidth: 0,
                                         borderType: 'solid'
                                     }
                                 },
@@ -178,58 +183,99 @@
                             }
                         },
                         {
+                            name: '成交量',
+                            type: 'bar',
+                            yAxisIndex: 1,
+                            stack: '成交量',
+                            animation: false,
+                            itemStyle: {
+                                color: '#DDDDDD'
+                            },
+                            data: svr_data.series_data_vol
+                        },
+                        {
                             name: 'EMA:5',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[1]
+                            data: svr_data.series_data_ema_5
+                        },
+                        {
+                            name: 'EMA:10',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_10
                         },
                         {
                             name: 'EMA:20',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[2]
+                            data: svr_data.series_data_ema_20
+                        },
+                        {
+                            name: 'EMA:30',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_30
                         },
                         {
                             name: 'EMA:250',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[3]
+                            data: svr_data.series_data_ema_250
                         },
                         {
                             name: 'BIAS:5',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[4]
+                            data: svr_data.series_data_bias_5
                         },
                         {
                             name: 'BIAS:20',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[5]
+                            data: svr_data.series_data_bias_20
                         },
                         {
                             name: 'MACD',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'MACD',
-                            data: svr_data.series_data[6]
+                            data: svr_data.series_data_macd
                         }
                     ]
                 };
@@ -290,7 +336,10 @@
                         {
                             scale: true,
                             splitArea: {
-                                show: true
+                                show: false
+                            },
+                            splitLine: {
+                                show: false
                             }
                         },
                         {
@@ -319,7 +368,7 @@
                     series: [
                         {
                             name: '上证综指',
-                            type: 'line',
+                            type: 'candlestick',
                             yAxisIndex: 0,
                             lineStyle: {
                                 normal: {
@@ -328,11 +377,17 @@
                                     type: 'dotted'
                                 }
                             },
-                            data: svr_data.series_data[0],
+                            data: svr_data.series_data_k,
                             markPoint: {
                                 animation: false,
                                 data: svr_data.markpoint_data
                             },
+                            /*markPoint: {
+                                data: [
+                                    {type: 'max', name: '最大值'},
+                                    {type: 'min', name: '最小值'}
+                                ]
+                            },*/
                             markLine: {
                                 symbol: ['none', 'none'],
                                 animation: false,
@@ -347,10 +402,11 @@
                             },
                             markArea: {
                                 silent: true,
+                                animation: false,
                                 itemStyle: {
                                     normal: {
                                         color: 'transparent',
-                                        borderWidth: 1,
+                                        borderWidth: 0,
                                         borderType: 'solid'
                                     }
                                 },
@@ -358,58 +414,99 @@
                             }
                         },
                         {
+                            name: '成交量',
+                            type: 'bar',
+                            yAxisIndex: 1,
+                            stack: '成交量',
+                            animation: false,
+                            itemStyle: {
+                                color: '#DDDDDD'
+                            },
+                            data: svr_data.series_data_vol
+                        },
+                        {
                             name: 'EMA:5',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[1]
+                            data: svr_data.series_data_ema_5
+                        },
+                        {
+                            name: 'EMA:10',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_10
                         },
                         {
                             name: 'EMA:20',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[2]
+                            data: svr_data.series_data_ema_20
+                        },
+                        {
+                            name: 'EMA:30',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_30
                         },
                         {
                             name: 'EMA:250',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[3]
+                            data: svr_data.series_data_ema_250
                         },
                         {
                             name: 'BIAS:5',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[4]
+                            data: svr_data.series_data_bias_5
                         },
                         {
                             name: 'BIAS:20',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[5]
+                            data: svr_data.series_data_bias_20
                         },
                         {
                             name: 'MACD',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'MACD',
-                            data: svr_data.series_data[6]
+                            data: svr_data.series_data_macd
                         }
                     ]
                 };
@@ -470,7 +567,10 @@
                         {
                             scale: true,
                             splitArea: {
-                                show: true
+                                show: false
+                            },
+                            splitLine: {
+                                show: false
                             }
                         },
                         {
@@ -499,8 +599,9 @@
                     series: [
                         {
                             name: '深证成指',
-                            type: 'line',
+                            type: 'candlestick',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     color: 'red',
@@ -508,11 +609,17 @@
                                     type: 'dotted'
                                 }
                             },
-                            data: svr_data.series_data[0],
+                            data: svr_data.series_data_k,
                             markPoint: {
                                 animation: false,
                                 data: svr_data.markpoint_data
                             },
+                            /*markPoint: {
+                                data: [
+                                    {type: 'max', name: '最大值'},
+                                    {type: 'min', name: '最小值'}
+                                ]
+                            },*/
                             markLine: {
                                 symbol: ['none', 'none'],
                                 animation: false,
@@ -527,10 +634,11 @@
                             },
                             markArea: {
                                 silent: true,
+                                animation: false,
                                 itemStyle: {
                                     normal: {
                                         color: 'transparent',
-                                        borderWidth: 1,
+                                        borderWidth: 0,
                                         borderType: 'solid'
                                     }
                                 },
@@ -538,58 +646,99 @@
                             }
                         },
                         {
+                            name: '成交量',
+                            type: 'bar',
+                            yAxisIndex: 1,
+                            stack: '成交量',
+                            animation: false,
+                            itemStyle: {
+                                color: '#DDDDDD'
+                            },
+                            data: svr_data.series_data_vol
+                        },
+                        {
                             name: 'EMA:5',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[1]
+                            data: svr_data.series_data_ema_5
+                        },
+                        {
+                            name: 'EMA:10',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_10
                         },
                         {
                             name: 'EMA:20',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[2]
+                            data: svr_data.series_data_ema_20
+                        },
+                        {
+                            name: 'EMA:30',
+                            type: 'line',
+                            yAxisIndex: 0,
+                            animation: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            data: svr_data.series_data_ema_30
                         },
                         {
                             name: 'EMA:250',
                             type: 'line',
                             yAxisIndex: 0,
+                            animation: false,
                             lineStyle: {
                                 normal: {
                                     width: 1
                                 }
                             },
-                            data: svr_data.series_data[3]
+                            data: svr_data.series_data_ema_250
                         },
                         {
                             name: 'BIAS:5',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[4]
+                            data: svr_data.series_data_bias_5
                         },
                         {
                             name: 'BIAS:20',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'BIAS',
-                            data: svr_data.series_data[5]
+                            data: svr_data.series_data_bias_20
                         },
                         {
                             name: 'MACD',
                             type: 'bar',
                             yAxisIndex: 1,
+                            animation: false,
                             stack: 'MACD',
-                            data: svr_data.series_data[6]
+                            data: svr_data.series_data_macd
                         }
                     ]
                 };
@@ -606,7 +755,9 @@
         });
 
         echarts.connect([myChart_indexe_000001SH, myChart_indexe_399001SZ]);
+
     });
+
 </script>
 
 </body>

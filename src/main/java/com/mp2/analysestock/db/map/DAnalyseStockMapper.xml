@@ -98,11 +98,15 @@
 
     <resultMap id="IndexDataResultMap" type="com.mp2.analysestock.db.model.D2IndexData">
         <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="open" property="open_val" jdbcType="DECIMAL"/>
         <result column="close" property="close_val" jdbcType="DECIMAL"/>
+        <result column="high" property="high_val" jdbcType="DECIMAL"/>
+        <result column="low" property="low_val" jdbcType="DECIMAL"/>
         <result column="change" property="change_val" jdbcType="DECIMAL"/>
         <result column="pct_change" property="pct_change_val" jdbcType="DECIMAL"/>
         <result column="vol" property="volume_val" jdbcType="INTEGER"/>
         <result column="amount" property="amount_val" jdbcType="INTEGER"/>
+
     </resultMap>
 
     <resultMap id="EveryDayTotalResultMap" type="com.mp2.analysestock.db.model.DEveryDayTotal">
@@ -227,14 +231,14 @@
     </select>
 
     <select id="select2IndexData" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">
-        select `trade_date`, `close`, `change`, `pct_change`, `vol`, `amount`
+        select `trade_date`, `open`, `close`, `high`, `low`, `change`, `pct_change`, `vol`, `amount`
         from d2_index_daily
         where `ts_code` = #{ts_code} and `trade_date` >= '20000101'
         order by trade_date
     </select>
 
     <select id="select2IndexMinDateByYear" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">
-        select b.`trade_date`, b.`close`, b.`change`, b.`pct_change`, b.`vol`, b.`amount` from
+        select b.`trade_date`, b.`open`, b.`close`, b.`high`, b.`low`, b.`change`, b.`pct_change`, b.`vol`, b.`amount` from
         (select left(`trade_date`, 4) as 'yyyy', `ts_code`, min(`trade_date`) as 'trade_date'
         from d2_index_daily
                 where `ts_code` = #{ts_code} and `trade_date` >= '20000101'
