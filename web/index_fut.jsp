@@ -10,7 +10,7 @@
     <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="Cache-Contral" content="no-cache, must-revalidate">
     <meta http-equiv="expires" content="0">
-    <title>胸毛兄的股票分析系统:技术</title>
+    <title>胸毛兄的股票分析系统:期货</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
@@ -19,15 +19,19 @@
     <link rel="stylesheet" href="/css/docs.min.css">
     <link rel="stylesheet" href="/css/plugins/jquery.toastr/toastr.min.css">
 
+    <link rel="stylesheet" href="/css/select2.min.css">
+    <link rel="stylesheet" href="/css/select2-bootstrap.min.css">
+
 </head>
 
 <body>
 
-<div id="div_indexe_000001SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_399001SZ" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_000852SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_000016SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_399006SZ" style="width: 1600px; height: 500px;"></div>
+<div>
+    <select id="ts_item" name="ts_item">
+    </select>
+</div>
+
+<div id="div_fut" style="width: 1600px; height: 500px;"></div>
 
 <br>
 <br>
@@ -44,6 +48,10 @@
 <script language="javascript" type="text/javascript" src="/js/fastclick.min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/toastr.min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/echarts/echarts.min.js"></script>
+
+<script language="javascript" type="text/javascript" src="/js/select2/select2.min.js"></script>
+<script language="javascript" type="text/javascript" src="/js/select2/i18n/zh-CN.js"></script>
+<script language="javascript" type="text/javascript" src="/js/select2/select2_function.js"></script>
 
 <script type="text/javascript">
 
@@ -150,12 +158,6 @@
                                 animation: false,
                                 data: svr_data.markpoint_data
                             },
-                            /*markPoint: {
-                                data: [
-                                    {type: 'max', name: '最大值'},
-                                    {type: 'min', name: '最小值'}
-                                ]
-                            },*/
                             markLine: {
                                 symbol: ['none', 'none'],
                                 animation: false,
@@ -188,69 +190,9 @@
                             stack: '成交量',
                             animation: false,
                             itemStyle: {
-                                color: 'rgba(221, 221, 221, 0.5)'
+                                color: '#DDDDDD'
                             },
                             data: svr_data.series_data_vol
-                        },
-                        {
-                            name: 'EMA:5',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            animation: false,
-                            lineStyle: {
-                                normal: {
-                                    width: 1
-                                }
-                            },
-                            data: svr_data.series_data_ema_5
-                        },
-                        {
-                            name: 'EMA:10',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            animation: false,
-                            lineStyle: {
-                                normal: {
-                                    width: 1
-                                }
-                            },
-                            data: svr_data.series_data_ema_10
-                        },
-                        {
-                            name: 'EMA:20',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            animation: false,
-                            lineStyle: {
-                                normal: {
-                                    width: 1
-                                }
-                            },
-                            data: svr_data.series_data_ema_20
-                        },
-                        {
-                            name: 'EMA:30',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            animation: false,
-                            lineStyle: {
-                                normal: {
-                                    width: 1
-                                }
-                            },
-                            data: svr_data.series_data_ema_30
-                        },
-                        {
-                            name: 'EMA:250',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            animation: false,
-                            lineStyle: {
-                                normal: {
-                                    width: 1
-                                }
-                            },
-                            data: svr_data.series_data_ema_250
                         },
                         {
                             name: 'BIAS:5',
@@ -275,17 +217,6 @@
                             animation: false,
                             stack: 'MACD',
                             data: svr_data.series_data_macd
-                        },
-                        {
-                            name: 'PSY',
-                            type: 'bar',
-                            yAxisIndex: 1,
-                            animation: false,
-                            stack: 'PSY',
-                            itemStyle: {
-                                color: 'rgba(221, 221, 221, 0.5)'
-                            },
-                            data: svr_data.series_data_psy
                         }
                     ]
                 };
@@ -303,20 +234,12 @@
     }
 
     $(document).ready(function () {
+        initSelect2("ts_item", "qryIDTextSelectResult.action", "futList", "200px");
+
         // 基于准备好的dom，初始化echarts实例
-        var myChart_indexe_000001SH = echarts.init(document.getElementById('div_indexe_000001SH'));
-        var myChart_indexe_399001SZ = echarts.init(document.getElementById('div_indexe_399001SZ'));
-        var myChart_indexe_000852SH = echarts.init(document.getElementById('div_indexe_000852SH'));
-        var myChart_indexe_000016SH = echarts.init(document.getElementById('div_indexe_000016SH'));
-        var myChart_indexe_399006SZ = echarts.init(document.getElementById('div_indexe_399006SZ'));
+        var myChart = echarts.init(document.getElementById('div_fut'));
 
-        chartLoadData(myChart_indexe_000001SH, "qryIndexesTech_000001SH.action", "上证综指", 85);
-        chartLoadData(myChart_indexe_399001SZ, "qryIndexesTech_399001SZ.action", "深证成指", 85);
-        chartLoadData(myChart_indexe_000852SH, "qryIndexesTech_000852SH.action", "中证1000", 60);
-        chartLoadData(myChart_indexe_000016SH, "qryIndexesTech_000016SH.action", "上证50", 80);
-        chartLoadData(myChart_indexe_399006SZ, "qryIndexesTech_399006SZ.action", "创业板指", 60);
-
-        echarts.connect([myChart_indexe_000001SH, myChart_indexe_399001SZ]);
+        chartLoadData(myChart, "qryFutTechByCode.action?paramValue=SR.ZCE_白银主力", "白糖主力", 60);
 
     });
 

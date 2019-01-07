@@ -33,6 +33,13 @@ public interface DAnalyseStockMapper {
     List<D2IndexData> select2IndexData(HashMap<String, Object> param);
 
     /**
+     * 根据 ts_code 获取每日期货数据
+     * @param param
+     * @return
+     */
+    List<D2FutData> select2FutData(HashMap<String, Object> param);
+
+    /**
      * 根据 ts_code 参数获取每年最初指数数据
      * @param param
      * @return
@@ -56,4 +63,11 @@ public interface DAnalyseStockMapper {
      * @return
      */
     List<DEveryDayHsgt> selectEveryDayHsgt();
+
+    /**
+     * 根据关键字搜索期货信息
+     * @param param
+     * @return
+     */
+    List<SelectItem> selectFutInfoByKey(HashMap<String, String> param);
 }

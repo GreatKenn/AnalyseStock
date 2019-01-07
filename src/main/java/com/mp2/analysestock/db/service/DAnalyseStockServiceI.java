@@ -26,6 +26,8 @@ public interface DAnalyseStockServiceI {
 
     List<D2IndexData> select2IndexData(HashMap<String, Object> param);
 
+    List<D2FutData> select2FutData(HashMap<String, Object> param);
+
     List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param);
 
     List<DEveryDayTotal> selectEveryDayTotal();
@@ -33,4 +35,6 @@ public interface DAnalyseStockServiceI {
     List<DEveryDayMargin> selectEveryDayMargin();
 
     List<DEveryDayHsgt> selectEveryDayHsgt();
+
+    List<SelectItem> selectFutInfoByKey(HashMap<String, String> param);
 }

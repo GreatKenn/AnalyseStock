@@ -46,6 +46,9 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
     public List<D2IndexData> select2IndexData(HashMap<String, Object> param) { return mapper.select2IndexData(param); }
 
     @Override
+    public List<D2FutData> select2FutData(HashMap<String, Object> param) { return mapper.select2FutData(param); }
+
+    @Override
     public List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param) { return mapper.select2IndexMinDateByYear(param); }
 
     @Override
@@ -56,4 +59,7 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
 
     @Override
     public List<DEveryDayHsgt> selectEveryDayHsgt() { return mapper.selectEveryDayHsgt(); }
+
+    @Override
+    public List<SelectItem> selectFutInfoByKey(HashMap<String, String> param) { return mapper.selectFutInfoByKey(param); }
 }

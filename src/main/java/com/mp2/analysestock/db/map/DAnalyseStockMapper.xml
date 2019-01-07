@@ -106,7 +106,17 @@
         <result column="pct_change" property="pct_change_val" jdbcType="DECIMAL"/>
         <result column="vol" property="volume_val" jdbcType="INTEGER"/>
         <result column="amount" property="amount_val" jdbcType="INTEGER"/>
+    </resultMap>
 
+    <resultMap id="FutDataResultMap" type="com.mp2.analysestock.db.model.D2FutData">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="open" property="open_val" jdbcType="DECIMAL"/>
+        <result column="close" property="close_val" jdbcType="DECIMAL"/>
+        <result column="settle" property="settle_val" jdbcType="DECIMAL"/>
+        <result column="high" property="high_val" jdbcType="DECIMAL"/>
+        <result column="low" property="low_val" jdbcType="DECIMAL"/>
+        <result column="vol" property="volume_val" jdbcType="INTEGER"/>
+        <result column="amount" property="amount_val" jdbcType="INTEGER"/>
     </resultMap>
 
     <resultMap id="EveryDayTotalResultMap" type="com.mp2.analysestock.db.model.DEveryDayTotal">
@@ -135,6 +145,11 @@
         <result column="sgt" property="sgt" jdbcType="DECIMAL"/>
         <result column="north_money" property="north_money" jdbcType="DECIMAL"/>
         <result column="south_money" property="south_money" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="Select2ResultMap_fut_base" type="com.mp2.analysestock.db.model.SelectItem">
+        <result column="trade_date" property="id" jdbcType="VARCHAR"/>
+        <result column="trade_date" property="text" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -237,6 +252,13 @@
         order by trade_date
     </select>
 
+    <select id="select2FutData" resultMap="FutDataResultMap" parameterType="java.util.HashMap">
+        select `trade_date`, `open`, `close`, `settle`, `high`, `low`, `vol`, `amount`
+        from d2_fut_daily
+        where `ts_code` = #{ts_code}
+        order by trade_date
+    </select>
+
     <select id="select2IndexMinDateByYear" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">
         select b.`trade_date`, b.`open`, b.`close`, b.`high`, b.`low`, b.`change`, b.`pct_change`, b.`vol`, b.`amount` from
         (select left(`trade_date`, 4) as 'yyyy', `ts_code`, min(`trade_date`) as 'trade_date'
@@ -269,6 +291,12 @@
         from d2_moneyflow_hsgt a, d2_moneyflow_hsgt b
         where b.trade_date >= a.trade_date
         group by b.trade_date
+    </select>
+
+    <select id="selectFutInfoByKey" parameterType="java.util.HashMap"  resultMap="Select2ResultMap_fut_base">
+        select `ts_code`, `name`
+        from d2_fut_basic
+        where `ts_code` like concat('%', #{key,jdbcType=VARCHAR}, '%') or `name` like concat('%', #{key,jdbcType=VARCHAR}, '%')
     </select>
 
 </mapper>

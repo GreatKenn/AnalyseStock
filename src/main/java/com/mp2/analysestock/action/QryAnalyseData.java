@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tictactec.ta.lib.Core;
 import com.tictactec.ta.lib.MInteger;
-import com.tictactec.ta.lib.RetCode;
 
 import com.mp2.analysestock.db.model.*;
 import com.mp2.analysestock.commons.MP2BaseActionSupport;
@@ -22,7 +21,17 @@ import com.mp2.analysestock.db.service.DAnalyseStockServiceI;
 public class QryAnalyseData extends MP2BaseActionSupport {
     private final static Logger logger = LoggerFactory.getLogger(QryAnalyseData_v1.class);
 
+    private String paramValue;          //入参
     private InputStream inputStream;    //返回的数据流
+
+    public String getParamValue() {
+        return paramValue;
+    }
+
+    public void setParamValue(String paramValue) {
+        this.paramValue = paramValue;
+        System.out.println("paramValue: " + paramValue);
+    }
 
     public InputStream getInputStream() {
         return inputStream;
@@ -141,6 +150,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         public double[] series_data_bias_5;
         public double[] series_data_bias_20;
         public double[] series_data_macd;
+        public double[] series_data_psy;
         public List<LineCoord>[] markline_data;
         public List<PointCoord_base> markpoint_data = new ArrayList<>();
         public List<AreaCoord>[] markarea_data;
@@ -159,6 +169,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             series_data_bias_5 = new double[xCount];
             series_data_bias_20 = new double[xCount];
             series_data_macd = new double[xCount];
+            series_data_psy = new double[xCount];
         }
     }
 
@@ -653,14 +664,32 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
     }
 
-    private List<ChanPoint> analyseChanPoint(List<D2IndexData> rich_data) {
+    private List<ChanPoint> analyseChanPoint_index(List<D2IndexData> rich_data) {
+        List<D2BaseData> re = new ArrayList<>();
+        for (int i = 0; i < rich_data.size(); i++) {
+            D2BaseData item = rich_data.get(i);
+            re.add(item);
+        }
+        return analyseChanPoint(re);
+    }
+
+    private List<ChanPoint> analyseChanPoint_fut(List<D2FutData> rich_data) {
+        List<D2BaseData> re = new ArrayList<>();
+        for (int i = 0; i < rich_data.size(); i++) {
+            D2BaseData item = rich_data.get(i);
+            re.add(item);
+        }
+        return analyseChanPoint(re);
+    }
+
+    private List<ChanPoint> analyseChanPoint(List<D2BaseData> rich_data) {
         int beforeDirection = 0, nowDirection; // -1 下跌 0 盘整 1 向上
-        D2IndexData beforeItem = null;
-        List<D2IndexData> clear_data = new ArrayList<>();
+        D2BaseData beforeItem = null;
+        List<D2BaseData> clear_data = new ArrayList<>();
 
         if (rich_data.size() > 1) {
-            D2IndexData b = rich_data.get(0);
-            D2IndexData e = rich_data.get(1);
+            D2BaseData b = rich_data.get(0);
+            D2BaseData e = rich_data.get(1);
             if (b.getHigh_val() > e.getHigh_val() && b.getLow_val() > e.getLow_val()) {
                 beforeDirection = -1;
             } else if (b.getHigh_val() < e.getHigh_val() && b.getLow_val() < e.getLow_val()) {
@@ -671,8 +700,8 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         // 做包含与合并操作
         for (int x = 1; x < rich_data.size(); x++) {
             double a1, a2, b1, b2;
-            D2IndexData b = rich_data.get(x - 1);
-            D2IndexData e = rich_data.get(x);
+            D2BaseData b = rich_data.get(x - 1);
+            D2BaseData e = rich_data.get(x);
 
             if (beforeItem == null) {
                 a1 = b.getLow_val();
@@ -702,7 +731,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                     switch (beforeDirection) {
                         case 1: // 之前上升
                             if (beforeItem == null) {
-                                beforeItem = new D2IndexData();
+                                beforeItem = new D2BaseData();
                                 beforeItem.setHigh_val(b.getHigh_val() > e.getHigh_val() ? b.getHigh_val() : e.getHigh_val());
                                 beforeItem.setLow_val(b.getLow_val() > e.getLow_val() ? b.getLow_val() : e.getLow_val());
                                 beforeItem.setTrade_date(b.getHigh_val() > e.getHigh_val() ? b.getTrade_date() : e.getTrade_date());
@@ -716,7 +745,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                             break;
                         case -1: // 之前下跌
                             if (beforeItem == null) {
-                                beforeItem = new D2IndexData();
+                                beforeItem = new D2BaseData();
                                 beforeItem.setHigh_val(b.getHigh_val() < e.getHigh_val() ? b.getHigh_val() : e.getHigh_val());
                                 beforeItem.setLow_val(b.getLow_val() < e.getLow_val() ? b.getLow_val() : e.getLow_val());
                                 beforeItem.setTrade_date(b.getHigh_val() < e.getHigh_val() ? b.getTrade_date() : e.getTrade_date());
@@ -739,7 +768,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         // 开头
         boolean bFindFirst = false;
         List<ChanPoint> re_pa = new ArrayList<>();
-        D2IndexData firstItem = clear_data.get(0);
+        D2BaseData firstItem = clear_data.get(0);
         ChanPoint firstPoint = new ChanPoint();
         firstPoint.arr_pos = 0;
         firstPoint.trade_date = firstItem.getTrade_date();
@@ -747,9 +776,9 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         // 中间 找到所有顶底分型
         for (int x = 1; x < (clear_data.size() - 1); x++) {
             ChanPoint lP = null;
-            D2IndexData item = clear_data.get(x);
-            D2IndexData b = clear_data.get(x - 1);
-            D2IndexData e = clear_data.get(x + 1);
+            D2BaseData item = clear_data.get(x);
+            D2BaseData b = clear_data.get(x - 1);
+            D2BaseData e = clear_data.get(x + 1);
 
             if (re_pa.size() > 1) {
                 lP = new ChanPoint();
@@ -1006,233 +1035,6 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return re;
     }
 
-/*    private List<ChanPoint> analyseChanLine(List<ChanPoint> data) {
-        List<ChanPoint> ok = new ArrayList<>();
-
-        if (data.size() > 4) {
-            ChanPoint beforePA1 = data.get(0);
-            ChanPoint beforePA2 = data.get(1);
-            ChanPoint beforePB1 = data.get(2);
-            ChanPoint beforePB2 = data.get(3);
-            ChanPoint nowPA1, nowPA2, nowPB1, nowPB2;
-            ChanPoint dd, gg;
-            int parentDirection, oldDirection, beforeDirection, nowDirection;
-            beforeDirection = getChanDirection(beforePA1.close_val, beforePA2.close_val, beforePB1.close_val, beforePB2.close_val);
-            oldDirection = beforeDirection;
-            parentDirection = beforeDirection;
-            gg = getChanMaxGG(beforePA1, beforePA2, beforePB1, beforePB2);
-            dd = getChanMaxDD(beforePA1, beforePA2, beforePB1, beforePB2);
-            for (int x = 4; x < (data.size() - 1); x += 2) {
-                nowPA1 = data.get(x - 2);
-                nowPA2 = data.get(x - 1);
-                nowPB1 = data.get(x);
-                nowPB2 = data.get(x + 1);
-                nowDirection = getChanDirection(nowPA1.close_val, nowPA2.close_val, nowPB1.close_val, nowPB2.close_val);
-                //System.out.println("gg_1:" + gg.close_val + " dd:" + dd.close_val);
-
-                if (beforeDirection != nowDirection) {
-                    //方向不一致
-                    if (beforeDirection == 0 && nowDirection == 1) {
-                        //盘整 -> 上升
-                        switch (oldDirection) {
-                            case 1:
-                                //System.out.println("上升 -> 盘整 -> 上升");
-                                break;
-                            case 0:
-                                if (parentDirection == 1) {
-                                    //System.out.println("上升 -> 盘整... 盘整... -> 上升");
-                                    ok.add(gg);
-                                    //System.out.println("AddP:" + gg.close_val);
-                                    gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                                    dd = getChanMaxDD(nowPB1, nowPB2, nowPB1, nowPB2);
-                                    ok.add(dd);
-                                    //System.out.println("AddP:" + dd.close_val);
-                                } else {
-                                    //System.out.println("下跌 -> 盘整... 盘整... -> 上升");
-                                    ok.add(dd);
-                                    //System.out.println("AddP:" + dd.close_val);
-                                    gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                                    dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                                }
-                                break;
-                            case -1:
-                                //System.out.println("下跌 -> 盘整 -> 上升");
-                                ok.add(dd);
-                                //System.out.println("AddP:" + dd.close_val);
-                                break;
-                        }
-                    } else if (beforeDirection == 0 && nowDirection == -1) {
-                        //盘整 -> 下跌
-                        switch (oldDirection) {
-                            case 1:
-                                //System.out.println("上升 -> 盘整 -> 下跌");
-                                ok.add(gg);
-                                //System.out.println("AddP:" + gg.close_val);
-                                break;
-                            case 0:
-                                if (parentDirection == 1) {
-                                    //System.out.println("上升 -> 盘整... 盘整... -> 下跌");
-                                    ok.add(gg);
-                                    //System.out.println("AddP:" + gg.close_val);
-                                    gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                                    dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                                } else {
-                                    //System.out.println("下跌 -> 盘整... 盘整... -> 下跌");
-                                    ok.add(dd);
-                                    //System.out.println("AddP:" + dd.close_val);
-                                    gg = getChanMaxGG(nowPB1, nowPB2, nowPB1, nowPB2);
-                                    dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                                    ok.add(gg);
-                                    //System.out.println("AddP:" + gg.close_val);
-                                }
-                                break;
-                            case -1:
-                                //System.out.println("下跌 -> 盘整 -> 下跌");
-                                break;
-                        }
-                    } else if (beforeDirection == 1 && nowDirection == 0) {
-                        //上升 -> 盘整
-                        //System.out.println("上升 -> 盘整");
-                        ok.add(dd);
-                        //System.out.println("AddP:" + dd.close_val);
-                        gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                    } else if (beforeDirection == 1 && nowDirection == -1) {
-                        //上升 -> 下跌
-                        //System.out.println("上升 -> 下跌");
-                        ok.add(dd);
-                        //System.out.println("AddP:" + dd.close_val);
-                        gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                        dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                        ok.add(gg);
-                        //System.out.println("AddP:" + gg.close_val);
-                    } else if (beforeDirection == -1 && nowDirection == 0) {
-                        //下跌 -> 盘整
-                        //System.out.println("下跌 -> 盘整");
-                        ok.add(gg);
-                        //System.out.println("AddP:" + gg.close_val);
-                        dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                    } else if (beforeDirection == -1 && nowDirection == 1) {
-                        //下跌 -> 上升
-                        //System.out.println("下跌 -> 上升");
-                        ok.add(gg);
-                        //System.out.println("AddP:" + gg.close_val);
-                        gg = getChanMaxGG(nowPA1, nowPA2, nowPB1, nowPB2);
-                        dd = getChanMaxDD(nowPA1, nowPA2, nowPB1, nowPB2);
-                        ok.add(dd);
-                        //System.out.println("AddP:" + dd.close_val);
-                    }
-
-                    if (nowDirection != 0) {
-                        parentDirection = nowDirection;
-                    }
-                } else {
-                    //方向一致
-                    if (nowDirection == 0) {
-                        //盘整
-                        //System.out.println("盘整 -> 盘整");
-                        gg = getChanMaxGG(gg, dd, nowPB1.close_val > nowPB2.close_val ? nowPB1 : nowPB2, nowPB1.close_val > nowPB2.close_val ? nowPB2 : nowPB1);
-                        dd = getChanMaxDD(gg, dd, nowPB1.close_val > nowPB2.close_val ? nowPB1 : nowPB2, nowPB1.close_val > nowPB2.close_val ? nowPB2 : nowPB1);
-                    } else if (nowDirection == -1) {
-                        //System.out.println("下跌 -> 下跌");
-                    } else if (nowDirection == 1) {
-                        //System.out.println("上升 -> 上升");
-                    }
-                }
-                //System.out.println("gg_2:" + gg.close_val + " dd:" + dd.close_val + "\n");
-
-                oldDirection = beforeDirection;
-                beforeDirection = nowDirection;
-            }
-
-            // 临时用于计算，加入最后一个点
-            if (data != null && data.size() > 0) {
-                ok.add(data.get(data.size() - 1));
-            }
-        }
-
-        // 清理重复数据
-        List<ChanPoint> re_p0 = new ArrayList<>();
-        ChanPoint temP = null;
-        for (int n = 0; n < ok.size(); n++) {
-            if (n == 0) {
-                temP = new ChanPoint();
-                temP.trade_date = ok.get(0).trade_date;
-                temP.close_val = ok.get(0).close_val;
-                temP.arr_pos = ok.get(0).arr_pos;
-                temP.tp = ok.get(0).tp;
-            } else if (n < (ok.size() - 1)) {
-                if (temP != null && temP.trade_date != ok.get(n).trade_date) {
-                    re_p0.add(temP);
-                    //System.out.println("Add " + temP.trade_date);
-                    temP = new ChanPoint();
-                    temP.trade_date = ok.get(n).trade_date;
-                    temP.close_val = ok.get(n).close_val;
-                    temP.arr_pos = ok.get(n).arr_pos;
-                    temP.tp = ok.get(n).tp;
-                }
-            } else if (n == (ok.size() - 1)) {
-                temP = new ChanPoint();
-                temP.trade_date = ok.get(n).trade_date;
-                temP.close_val = ok.get(n).close_val;
-                temP.arr_pos = ok.get(n).arr_pos;
-                temP.tp = ok.get(n).tp;
-                re_p0.add(temP);
-                // System.out.println("Add " + temP.trade_date);
-            }
-        }
-
-        // 过滤掉不符合一笔的数据(1.两个顶底之间小于3个，并且前后方向一致)
-        List<ChanPoint> re_p1 = new ArrayList<>();
-        if (re_p0.size() > 0) {
-            re_p1.add(re_p0.get(0));
-        }
-        int ratio = 2;
-        if ((re_p0.size() / 2) == 1) {// 是否为"奇数"
-            ratio = 3;
-        }
-        for (int n = 1; n < (re_p0.size() - ratio); n++) {
-            ChanPoint mP1 = re_p0.get(n);
-            ChanPoint mP2 = re_p0.get(n + 1);
-            ChanPoint bP = re_p0.get(n - 1);
-            ChanPoint eP = re_p0.get(n + 2);
-            if (Math.abs(mP1.arr_pos - mP2.arr_pos) < 4
-                    && Math.abs(mP2.arr_pos - eP.arr_pos) >= 4
-                    && Math.abs(mP1.arr_pos - bP.arr_pos) >= 4) {
-                if ((bP.close_val < mP1.close_val && bP.close_val < mP2.close_val
-                        && eP.close_val > mP1.close_val && eP.close_val > mP2.close_val)
-                        || (bP.close_val > mP1.close_val && bP.close_val > mP2.close_val
-                        && eP.close_val < mP1.close_val && eP.close_val < mP2.close_val)) {
-                    // 符合简化过滤条件：两个顶底之间小于3个，并且前后方向一致
-                    n++;
-                } else {
-                    re_p1.add(re_p0.get(n));
-                }
-            } else {
-                re_p1.add(re_p0.get(n));
-            }
-        }
-        for (int n = (re_p0.size() - ratio); n < re_p0.size(); n++) {
-            re_p1.add(re_p0.get(n));
-        }
-
-        // 过滤掉不符合顶、底、顶、底这样规则的多余数据
-        List<ChanPoint> re_p2 = new ArrayList<>();
-        ChanPoint beforePoint = re_p1.get(0);
-        if (re_p1.size() > 1) {
-            beforePoint = re_p1.get(0);
-            re_p2.add(beforePoint);
-        }
-        for (int n = 1; n < re_p1.size(); n++) {
-            ChanPoint item = re_p1.get(n);
-            if (item.tp != beforePoint.tp) {
-                re_p2.add(item);
-                beforePoint = item;
-            }
-        }
-
-        return re_p2;
-    }*/
-
     /**
      * 计算乖离率
      *
@@ -1433,7 +1235,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             index_data = dAnalyseStockService.select2IndexData(param);
             index_mindate_year = dAnalyseStockService.select2IndexMinDateByYear(param);
 
-            String[] legend = {ts_name, "成交量", "EMA:5", "EMA:10", "EMA:20", "EMA:30", "EMA:250", "BIAS:5", "BIAS:20", "MACD"};
+            String[] legend = {ts_name, "成交量", "EMA:5", "EMA:10", "EMA:20", "EMA:30", "EMA:250", "BIAS:5", "BIAS:20", "MACD", "PSY"};
             EChartsResult_K eChartsResult = new EChartsResult_K(index_data.size(), legend.length - 1);
 
             eChartsResult.legend_data = legend.clone();
@@ -1448,8 +1250,10 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             eChartsResult.legend_selected.put("BIAS:5", false);
             eChartsResult.legend_selected.put("BIAS:20", false);
             eChartsResult.legend_selected.put("MACD", false);
+            eChartsResult.legend_selected.put("PSY", false);
 
-            // 填充指数数据
+            // 填充指数数据、计算PSY
+            int psy_n = 12;
             for (int x = 0; x < index_data.size(); x++) {
                 D2IndexData item = index_data.get(x);
 
@@ -1459,6 +1263,18 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 eChartsResult.series_data_k[x][2] = item.getLow_val();
                 eChartsResult.series_data_k[x][3] = item.getHigh_val();
                 eChartsResult.series_data_vol[x] = item.getVolume_val();
+
+                // PSY = N日内上涨天数/N*100 参数N设置为12日
+                if (x >= psy_n) {
+                    int t1 = 0;
+                    for (int n = 0; n < psy_n; n++) {
+                        if (eChartsResult.series_data_k[x - n][0] < eChartsResult.series_data_k[x - n][1]
+                                && eChartsResult.series_data_k[x - n][1] > eChartsResult.series_data_k[x - n - 1][1]) {
+                            t1++;
+                        }
+                    }
+                    eChartsResult.series_data_psy[x] = (double) Math.round((double) t1 / (double) psy_n * 100 * 10) / 10;
+                }
             }
 
             // 计算均线、BIAS、MACD  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1587,7 +1403,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
 
             // 处理线段 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            List<ChanPoint> listChanLine_1f = analyseChanPoint(index_data);
+            List<ChanPoint> listChanLine_1f = analyseChanPoint_index(index_data);
             System.out.println("ChanLine_1f.size: " + listChanLine_1f.size());
             List<ChanPoint> listChanLine_5f = analyseChanLine_v2(listChanLine_1f);
             System.out.println("ChanLine_5f.size: " + listChanLine_5f.size());
@@ -1745,6 +1561,11 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return SUCCESS;
     }
 
+    public String getIndexesTech_000016SH() {
+        getIndexesTech("000016.SH", "上证50");
+        return SUCCESS;
+    }
+
     public String getIndexesTech_000001SH() {
         getIndexesTech("000001.SH", "上证综指");
         return SUCCESS;
@@ -1759,4 +1580,215 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         getIndexesTech("399006.SZ", "创业板指");
         return SUCCESS;
     }
+
+    /**
+     * 获取期货连续数据技术分析
+     *
+     * @param ts_code
+     * @param ts_name
+     */
+    private void getFutTech(String ts_code, String ts_name) {
+        ObjectMapper objMapper = new ObjectMapper();
+        StringWriter witStr = new StringWriter();
+        List<D2FutData> fut_data;
+        DAnalyseStockServiceI dAnalyseStockService;
+
+        dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+        try {
+            HashMap<String, Object> param = new HashMap<>();
+
+            param.put("ts_code", ts_code);
+            fut_data = dAnalyseStockService.select2FutData(param);
+
+            String[] legend = {ts_name, "成交量", "BIAS:5", "BIAS:20", "MACD"};
+            EChartsResult_K eChartsResult = new EChartsResult_K(fut_data.size(), legend.length - 1);
+
+            eChartsResult.legend_data = legend.clone();
+            eChartsResult.legend_selected.clear();
+            eChartsResult.legend_selected.put(ts_name, true);
+            eChartsResult.legend_selected.put("成交量", false);
+            eChartsResult.legend_selected.put("BIAS:5", false);
+            eChartsResult.legend_selected.put("BIAS:20", false);
+            eChartsResult.legend_selected.put("MACD", false);
+
+            // 填充指数数据
+            for (int x = 0; x < fut_data.size(); x++) {
+                D2FutData item = fut_data.get(x);
+
+                eChartsResult.xAxis_data[x] = item.getTrade_date();
+                eChartsResult.series_data_k[x][0] = item.getOpen_val();
+                eChartsResult.series_data_k[x][1] = item.getClose_val();
+                eChartsResult.series_data_k[x][2] = item.getLow_val();
+                eChartsResult.series_data_k[x][3] = item.getHigh_val();
+                eChartsResult.series_data_vol[x] = item.getVolume_val();
+            }
+
+            // 计算均线、BIAS、MACD  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            Core taLibCore = new Core();
+            MInteger taLibBegin = new MInteger();
+            MInteger taLibLength = new MInteger();
+            double[] close_val_data = new double[eChartsResult.series_data_k.length];
+
+            for (int n = 0; n < close_val_data.length; n++) {
+                close_val_data[n] = eChartsResult.series_data_k[n][1];
+            }
+
+            int cha;
+            double[] taLibOut = new double[eChartsResult.series_data_k.length];
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 5, taLibBegin, taLibLength, taLibOut);
+            for (int x = 0; x < taLibLength.value; x++) {
+                cha = eChartsResult.series_data_ema_5.length - taLibLength.value;
+                eChartsResult.series_data_ema_5[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+                // BIAS 5 Day
+                eChartsResult.series_data_bias_5[x + cha] = bias(eChartsResult.series_data_ema_5[x + cha], eChartsResult.series_data_k[x + cha][2]);
+            }
+            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 20, taLibBegin, taLibLength, taLibOut);
+            for (int x = 0; x < taLibLength.value; x++) {
+                cha = eChartsResult.series_data_ema_20.length - taLibLength.value;
+                eChartsResult.series_data_ema_20[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
+                // BIAS
+                eChartsResult.series_data_bias_20[x + cha] = bias(eChartsResult.series_data_ema_20[x + cha], eChartsResult.series_data_k[x + cha][2]);
+            }
+            double[] taLibOutMACD = new double[close_val_data.length];
+            double[] taLibOutMACDSignal = new double[close_val_data.length];
+            double[] taLibOutMACDHist = new double[close_val_data.length];
+            taLibCore.macd(0, close_val_data.length - 1, close_val_data, 12, 26, 9, taLibBegin, taLibLength, taLibOutMACD, taLibOutMACDSignal, taLibOutMACDHist);
+            for (int x = 0; x < taLibLength.value; x++) {
+                eChartsResult.series_data_macd[x + (eChartsResult.series_data_macd.length - taLibLength.value)] = (double) Math.round(taLibOutMACDHist[x] * 100) / 100;
+            }
+
+            // 处理线段 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            List<ChanPoint> listChanLine_1f = analyseChanPoint_fut(fut_data);
+            System.out.println("ChanLine_1f.size: " + listChanLine_1f.size());
+            List<ChanPoint> listChanLine_5f = analyseChanLine_v2(listChanLine_1f);
+            System.out.println("ChanLine_5f.size: " + listChanLine_5f.size());
+
+            fut_data.clear();
+
+            // 标注 顶底 分型
+            for (int x = 0; x < listChanLine_1f.size(); x++) {
+                ChanPoint item = listChanLine_1f.get(x);
+                PointCoord_base p = new PointCoord_base();
+                p.symbolSize = 6;
+                p.itemStyle.color = "#FF3399";
+                p.coord[0] = item.trade_date;
+                p.coord[1] = item.close_val + "";
+                eChartsResult.markpoint_data.add(p);
+            }
+
+            int index;
+            //double sum_val;
+            List<LineCoord>[] markline_1f = new List[listChanLine_1f.size() - 1];
+            List<LineCoord>[] markline_5f = new List[listChanLine_5f.size() - 1];
+            eChartsResult.markline_data = new List[markline_5f.length + markline_1f.length];
+            // 1F级线段
+            index = 0;
+            for (int x = 1; x < listChanLine_1f.size(); x++) {
+                ChanPoint itemEnd = listChanLine_1f.get(x);
+                ChanPoint itemFrom = listChanLine_1f.get(x - 1);
+                List<LineCoord> listP = new ArrayList<>();
+                LineCoord p1 = new LineCoord();
+                LineCoord p2 = new LineCoord();
+
+                p1.coord[0] = itemFrom.trade_date;
+                p1.coord[1] = itemFrom.close_val + "";
+                p1.lineStyle.color = "#CCCCCC";
+                p2.coord[0] = itemEnd.trade_date;
+                p2.coord[1] = itemEnd.close_val + "";
+                p2.lineStyle.color = "#CCCCCC";
+
+                listP.add(p1);
+                listP.add(p2);
+                markline_1f[index] = listP;
+                eChartsResult.markline_data[index] = listP;
+                index++;
+            }
+            listChanLine_1f.clear();
+
+            // 5F级线段
+            for (int x = 1; x < listChanLine_5f.size(); x++) {
+                ChanPoint itemEnd = listChanLine_5f.get(x);
+                ChanPoint itemFrom = listChanLine_5f.get(x - 1);
+                List<LineCoord> listP = new ArrayList<>();
+                LineCoord p1 = new LineCoord();
+                LineCoord p2 = new LineCoord();
+
+                p1.coord[0] = itemFrom.trade_date;
+                p1.coord[1] = itemFrom.close_val + "";
+                p1.lineStyle.color = "#9999ff";
+                p2.coord[0] = itemEnd.trade_date;
+                p2.coord[1] = itemEnd.close_val + "";
+                p2.lineStyle.color = "#9999ff";
+
+                listP.add(p1);
+                listP.add(p2);
+                markline_5f[index - markline_1f.length] = listP;
+                eChartsResult.markline_data[index] = listP;
+                index++;
+            }
+            listChanLine_5f.clear();
+
+            // 处理区域 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            index = 0;
+            List<AreaCoord> listAreaCoord_1f = analyseChanArea(markline_1f);
+            List<AreaCoord> listAreaCoord_5f = analyseChanArea(markline_5f);
+            System.out.println("listAreaCoord_1f.size(): " + listAreaCoord_1f.size());
+            System.out.println("listAreaCoord_5f.size(): " + listAreaCoord_5f.size());
+            eChartsResult.markarea_data = new List[listAreaCoord_1f.size() / 2 + listAreaCoord_5f.size() / 2];
+            for (int x = 0; x < listAreaCoord_1f.size() - 1; x += 2) {
+                List<AreaCoord> listP = new ArrayList<>();
+                AreaCoord p1 = listAreaCoord_1f.get(x);
+                AreaCoord p2 = listAreaCoord_1f.get(x + 1);
+                p1.itemStyle.color = "rgba(255, 204, 204, 0.8)";
+                p2.itemStyle.color = "rgba(255, 204, 204, 0.8)";
+                listP.add(p1);
+                listP.add(p2);
+                eChartsResult.markarea_data[index++] = listP;
+            }
+            listAreaCoord_1f.clear();
+            for (int x = 0; x < listAreaCoord_5f.size() - 1; x += 2) {
+                List<AreaCoord> listP = new ArrayList<>();
+                AreaCoord p1 = listAreaCoord_5f.get(x);
+                AreaCoord p2 = listAreaCoord_5f.get(x + 1);
+                p1.itemStyle.color = "rgba(255, 51, 153, 0.05)";
+                p2.itemStyle.color = "rgba(255, 51, 153, 0.05)";
+                listP.add(p1);
+                listP.add(p2);
+                eChartsResult.markarea_data[index++] = listP;
+            }
+            listAreaCoord_5f.clear();
+
+            try {
+                objMapper.writeValue(witStr, eChartsResult);
+            } catch (JsonGenerationException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (JsonMappingException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage());
+            }
+
+            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
+
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 根据参数获取期货技术分析数据
+     *
+     * @return
+     */
+    public String getFutTechByCode() {
+        String[] v = paramValue.split("_");
+
+        if (v.length == 2) {
+            getFutTech(v[0], v[1]);
+        }
+        return SUCCESS;
+    }
+
 }
