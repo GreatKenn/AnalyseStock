@@ -62,4 +62,7 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
 
     @Override
     public List<SelectItem> selectFutInfoByKey(HashMap<String, String> param) { return mapper.selectFutInfoByKey(param); }
+
+    @Override
+    public D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param) { return mapper.select2TotalIndexBetweenDate(param); }
 }

@@ -23,11 +23,11 @@
 
 <body>
 
-<div id="div_indexe_000001SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_399001SZ" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_000852SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_000016SH" style="width: 1600px; height: 500px;"></div>
-<div id="div_indexe_399006SZ" style="width: 1600px; height: 500px;"></div>
+<div id="div_indexe_000001SH" style="width: 1680px; height: 500px;"></div>
+<div id="div_indexe_399001SZ" style="width: 1680px; height: 500px;"></div>
+<div id="div_indexe_000852SH" style="width: 1680px; height: 500px;"></div>
+<div id="div_indexe_000016SH" style="width: 1680px; height: 500px;"></div>
+<div id="div_indexe_399006SZ" style="width: 1680px; height: 500px;"></div>
 
 <br>
 <br>
@@ -84,8 +84,8 @@
                         selected: svr_data.legend_selected
                     },
                     grid: {
-                        left: '10%',
-                        right: '10%',
+                        left: '5%',
+                        right: '5%',
                         bottom: '15%'
                     },
                     xAxis: {
@@ -169,7 +169,7 @@
                                 data: svr_data.markline_data
                             },
                             markArea: {
-                                silent: true,
+                                silent: false,
                                 animation: false,
                                 itemStyle: {
                                     normal: {
@@ -186,6 +186,7 @@
                             type: 'bar',
                             yAxisIndex: 1,
                             stack: '成交量',
+                            silent: true,
                             animation: false,
                             itemStyle: {
                                 color: 'rgba(221, 221, 221, 0.5)'
@@ -196,6 +197,7 @@
                             name: 'EMA:5',
                             type: 'line',
                             yAxisIndex: 0,
+                            silent: true,
                             animation: false,
                             lineStyle: {
                                 normal: {
@@ -208,6 +210,7 @@
                             name: 'EMA:10',
                             type: 'line',
                             yAxisIndex: 0,
+                            silent: true,
                             animation: false,
                             lineStyle: {
                                 normal: {
@@ -220,6 +223,7 @@
                             name: 'EMA:20',
                             type: 'line',
                             yAxisIndex: 0,
+                            silent: true,
                             animation: false,
                             lineStyle: {
                                 normal: {
@@ -232,6 +236,7 @@
                             name: 'EMA:30',
                             type: 'line',
                             yAxisIndex: 0,
+                            silent: true,
                             animation: false,
                             lineStyle: {
                                 normal: {
@@ -244,6 +249,7 @@
                             name: 'EMA:250',
                             type: 'line',
                             yAxisIndex: 0,
+                            silent: true,
                             animation: false,
                             lineStyle: {
                                 normal: {
@@ -256,6 +262,7 @@
                             name: 'BIAS:5',
                             type: 'bar',
                             yAxisIndex: 1,
+                            silent: true,
                             animation: false,
                             stack: 'BIAS',
                             data: svr_data.series_data_bias_5
@@ -264,6 +271,7 @@
                             name: 'BIAS:20',
                             type: 'bar',
                             yAxisIndex: 1,
+                            silent: true,
                             animation: false,
                             stack: 'BIAS',
                             data: svr_data.series_data_bias_20
@@ -272,6 +280,7 @@
                             name: 'MACD',
                             type: 'bar',
                             yAxisIndex: 1,
+                            silent: true,
                             animation: false,
                             stack: 'MACD',
                             data: svr_data.series_data_macd
@@ -280,6 +289,7 @@
                             name: 'PSY',
                             type: 'bar',
                             yAxisIndex: 1,
+                            silent: true,
                             animation: false,
                             stack: 'PSY',
                             itemStyle: {
@@ -295,7 +305,11 @@
                 // 响应事件
                 myChart.on('click', function (params) {
                     if (params.componentType === 'markLine') {
-                        toastr.info("动能值：" + params.value);
+                        toastr.info(params.value);
+                    }
+
+                    if (params.componentType === 'markArea') {
+                        toastr.info(params.value);
                     }
                 });
             }

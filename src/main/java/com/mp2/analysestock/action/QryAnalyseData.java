@@ -125,13 +125,14 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     }
 
     class LineCoord {
-        public double value = 0;
+        public String value = "";
         public Label label = new Label();
         public LineStyle lineStyle = new LineStyle();
         public String[] coord = new String[2];
     }
 
     class AreaCoord {
+        public String value = "";
         public ItemStyle itemStyle = new ItemStyle();
         public String[] coord = new String[2];
     }
@@ -509,6 +510,10 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return getChanDirection(a.highPoint.close_val, a.lowPoint.close_val, b.highPoint.close_val, b.lowPoint.close_val);
     }
 
+    private int getChanDirection(ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
+        return getChanDirection(a1.close_val, a2.close_val, b1.close_val, b2.close_val);
+    }
+
     private int getChanDirection(double a1, double a2, double b1, double b2) {
         int re; // -1 下跌 0 盘整 1 上升
         double aH, aL, bH, bL;
@@ -533,77 +538,11 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             re = 0;
         } else if (bH > aH && bL > aL) {
             re = 1;
-        } else if (bL < aL && bH < aH) {
+        } else if (bH < aH && bL < aL) {
             re = -1;
         } else {
             re = 0;
         }
-
-        /*
-        if (b2 > b1) { // B 朝上
-            if (a2 > a1) { // A 朝上， B 朝上
-                if (b2 == a2 || b1 == a1) {
-                    re = 0;
-                } else if (b2 > a2) {
-                    if (b1 > a1)
-                        re = 1;
-                    else
-                        re = 0;
-                } else {
-                    if (b1 < a1)
-                        re = -1;
-                    else
-                        re = 0;
-                }
-            } else { // A 朝下， B 朝上
-                if (b2 == a1 || b1 == a2) {
-                    re = 0;
-                } else if (b2 > a1) {
-                    if (b1 > a2)
-                        re = 1;
-                    else
-                        re = 0;
-                } else {
-                    if (b2 < a1)
-                        re = -1;
-                    else
-                        re = 0;
-                }
-            }
-        } else { // B 朝下
-            if (a2 < a1) { // A 朝下， B 朝下
-                if (b2 == a2 || a1 == b1) {
-                    re = 0;
-                } else if (b2 > a2) {
-                    if (b1 > a1) {
-                        re = 1;
-                    } else {
-                        re = 0;
-                    }
-                } else {
-                    if (b1 < a1)
-                        re = -1;
-                    else
-                        re = 0;
-                }
-            } else { // A 朝上， B 朝下
-                if (b2 == a1 || b1 == a2) {
-                    re = 0;
-                } else if (b2 > a1) {
-                    if (b1 > a2) {
-                        re = 1;
-                    } else {
-                        re = 0;
-                    }
-                } else {
-                    if (b1 < a2)
-                        re = -1;
-                    else
-                        re = 0;
-                }
-            }
-        }
-        */
 
         return re;
     }
@@ -682,7 +621,24 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return analyseChanPoint(re);
     }
 
-    private List<ChanPoint> analyseChanPoint(List<D2BaseData> rich_data) {
+    private List<D2BaseData> clearK_index(List<D2IndexData> rich_data) {
+        List<D2BaseData> re = new ArrayList<>();
+        for (int i = 0; i < rich_data.size(); i++) {
+            D2BaseData item = rich_data.get(i);
+            re.add(item);
+        }
+        return clearK(re);
+    }
+
+    /**
+     * 合并存在包含关系的K线
+     *
+     * @param rich_data
+     * @return
+     */
+    private List<D2BaseData> mergeK(List<D2BaseData> rich_data) {
+        System.out.println("Begin->mergeK.size: " + rich_data.size());
+
         int beforeDirection = 0, nowDirection; // -1 下跌 0 盘整 1 向上
         D2BaseData beforeItem = null;
         List<D2BaseData> clear_data = new ArrayList<>();
@@ -748,11 +704,11 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                                 beforeItem = new D2BaseData();
                                 beforeItem.setHigh_val(b.getHigh_val() < e.getHigh_val() ? b.getHigh_val() : e.getHigh_val());
                                 beforeItem.setLow_val(b.getLow_val() < e.getLow_val() ? b.getLow_val() : e.getLow_val());
-                                beforeItem.setTrade_date(b.getHigh_val() < e.getHigh_val() ? b.getTrade_date() : e.getTrade_date());
+                                beforeItem.setTrade_date(b.getLow_val() < e.getLow_val() ? b.getTrade_date() : e.getTrade_date());
                             } else {
                                 beforeItem.setHigh_val(beforeItem.getHigh_val() < e.getHigh_val() ? beforeItem.getHigh_val() : e.getHigh_val());
                                 beforeItem.setLow_val(beforeItem.getLow_val() < e.getLow_val() ? beforeItem.getLow_val() : e.getLow_val());
-                                beforeItem.setTrade_date(beforeItem.getHigh_val() < e.getHigh_val() ? beforeItem.getTrade_date() : e.getTrade_date());
+                                beforeItem.setTrade_date(beforeItem.getLow_val() < e.getLow_val() ? beforeItem.getTrade_date() : e.getTrade_date());
                             }
                             beforeItem.setOpen_val(beforeItem.getHigh_val());
                             beforeItem.setClose_val(beforeItem.getLow_val());
@@ -760,127 +716,262 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                         case 0: // 之前盘整
                     }
             }
+
+            if (x == rich_data.size() - 1) {
+                // 最后一个
+                if (beforeItem == null) {
+                    clear_data.add(e);
+                } else {
+                    clear_data.add(beforeItem);
+                }
+            }
         }
 
-        // System.out.println("ClearPoint0: " + clear_data.get(0).toString());
-        System.out.println("ClearPoint.size: " + clear_data.size());
+        System.out.println("End->mergeK.size: " + clear_data.size());
 
-        // 开头
-        boolean bFindFirst = false;
+        return clear_data;
+    }
+
+    /**
+     * 做到无可合并后的K线
+     *
+     * @param rich_k
+     * @return
+     */
+    private List<D2BaseData> clearK(List<D2BaseData> rich_k) {
+        int oldCount, clearCount;
+        List<D2BaseData> clear_data, old_data;
+
+        // 合并包含关系的K线
+        old_data = rich_k;
+        while (true) {
+            oldCount = old_data.size();
+            clear_data = mergeK(old_data);
+            clearCount = clear_data.size();
+            old_data = clear_data;
+
+            if (clearCount == oldCount) break;
+        }
+
+        return clear_data;
+    }
+
+    private ChanPoint getMaxChanPoint(ChanPoint maxP, ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
+        ChanPoint t = getMaxChanPoint(a1, a2, b1, b2);
+        return maxP.close_val > t.close_val ? maxP : t;
+    }
+
+    private ChanPoint getMaxChanPoint(ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
+        ChanPoint re;
+
+        re = a1.close_val > a2.close_val ? a1 : a2;
+        re = re.close_val > b1.close_val ? re : b1;
+        re = re.close_val > b2.close_val ? re : b2;
+
+        return re;
+    }
+
+    private ChanPoint getMinChanPoint(ChanPoint minP, ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
+        ChanPoint t = getMinChanPoint(a1, a2, b1, b2);
+        return minP.close_val < t.close_val ? minP : t;
+    }
+
+    private ChanPoint getMinChanPoint(ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
+        ChanPoint re;
+
+        re = a1.close_val < a2.close_val ? a1 : a2;
+        re = re.close_val < b1.close_val ? re : b1;
+        re = re.close_val < b2.close_val ? re : b2;
+
+        return re;
+    }
+
+    /**
+     * 过滤不符合要求的顶底与重复数据
+     *
+     * @param pointList
+     * @return
+     */
+    private List<ChanPoint> clearChanPoint(List<ChanPoint> pointList) {
+        System.out.println("Begin->clearChanPoint.size: " + pointList.size());
+
+        // 0:顶分型 1:底分型
+        int direction;
+        List<ChanPoint> re_pb = new ArrayList<>();
+        int x = 3, beforeX = x;
+        while (x < pointList.size()) {
+            ChanPoint a1 = pointList.get(x - 3);
+            ChanPoint a2 = pointList.get(x - 2);
+            ChanPoint b1 = pointList.get(x - 1);
+            ChanPoint b2 = pointList.get(x);
+
+            beforeX = x;
+            direction = getChanDirection(a1, a2, b1, b2);
+
+            /*if (x < 20) {
+                System.out.println("direction:" + direction);
+                System.out.println(a1);
+                System.out.println(a2);
+                System.out.println(b1);
+                System.out.println(b2);
+                System.out.println("-----");
+            }*/
+
+            if (direction != 0) {
+                // 有趋势则处理
+                if (Math.abs(a2.arr_pos - b1.arr_pos) < 4 || Math.abs(a1.arr_pos - a2.arr_pos) < 4 || Math.abs(b1.arr_pos - b2.arr_pos) < 4) {
+                    // 不合规
+                    if ((direction == -1 && a1.close_val < a2.close_val) || (direction == 1 && a1.close_val > a2.close_val)) {
+                        // 线段与趋势向逆
+                        re_pb.add(a1);
+                        x += 1;
+                    } else {
+                        // 线段与趋势向顺
+                        re_pb.add(a1);
+                        re_pb.add(b2);
+                        x += 3;
+                    }
+                } else {
+                    re_pb.add(a1);
+                    x += 1;
+                }
+            } else {
+                // 盘整
+                re_pb.add(a1);
+                x += 1;
+            }
+
+            if (x >= pointList.size()) {
+                if ((x - beforeX) < 3) {
+                    re_pb.add(a2);
+                    re_pb.add(b1);
+                    re_pb.add(b2);
+                }
+            }
+        }
+
+        int lastCount = (x - beforeX) - (x - (pointList.size() - 1));
+        //int lastCount = (x - beforeX);
+        if (lastCount > 0) {
+            for (x = lastCount; x > 0; x--) {
+                re_pb.add(pointList.get(pointList.size() - x));
+            }
+        }
+
+        System.out.println("Middle01->clearChanPoint.size: " + re_pb.size());
+
+        // 清除重复的分型点
+        List<ChanPoint> clear_data = new ArrayList<>();
+        ChanPoint beforePoint = null;
+        if (re_pb.size() > 0) {
+            beforePoint = re_pb.get(0);
+        }
+        for (x = 1; x < re_pb.size(); x++) {
+            ChanPoint p = re_pb.get(x);
+            // System.out.println(p);
+            if (p.trade_date.equals(beforePoint.trade_date)) {
+                // 相同的过滤
+            } else {
+                clear_data.add(beforePoint);
+                beforePoint = new ChanPoint();
+                beforePoint.trade_date = p.trade_date;
+                beforePoint.close_val = p.close_val;
+                beforePoint.arr_pos = p.arr_pos;
+                beforePoint.tp = p.tp;
+            }
+        }
+
+        if (re_pb.size() > 2 && !re_pb.get(re_pb.size() - 1).trade_date.equals(re_pb.get(re_pb.size() - 2).trade_date)) {
+            clear_data.add(re_pb.get(re_pb.size() - 1));
+        }
+
+        System.out.println("End->clearChanPoint.size: " + clear_data.size());
+
+        return clear_data;
+    }
+
+    /**
+     * 分析顶底分型
+     *
+     * @param rich_data
+     * @return
+     */
+    private List<ChanPoint> analyseChanPoint(List<D2BaseData> rich_data) {
+        List<D2BaseData> clear_k;
+
+        // 合并包含关系的K线
+        clear_k = clearK(rich_data);
+
+        // 获取所有顶底分型
+        boolean bReady = false;
         List<ChanPoint> re_pa = new ArrayList<>();
-        D2BaseData firstItem = clear_data.get(0);
+        D2BaseData firstItem = clear_k.get(0);
         ChanPoint firstPoint = new ChanPoint();
         firstPoint.arr_pos = 0;
         firstPoint.trade_date = firstItem.getTrade_date();
 
-        // 中间 找到所有顶底分型
-        for (int x = 1; x < (clear_data.size() - 1); x++) {
-            ChanPoint lP = null;
-            D2BaseData item = clear_data.get(x);
-            D2BaseData b = clear_data.get(x - 1);
-            D2BaseData e = clear_data.get(x + 1);
+        for (int x = 2; x < (clear_k.size() - 1); x++) {
+            D2BaseData item = clear_k.get(x);
+            D2BaseData b = clear_k.get(x - 1);
+            D2BaseData e = clear_k.get(x + 1);
 
-            if (re_pa.size() > 1) {
-                lP = new ChanPoint();
-                lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
-                lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
-                lP.tp = re_pa.get(re_pa.size() - 1).tp;
-                lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
-            }
             //System.out.println(item.toString());
-
+            // 0:顶分型 1:底分型
             if (item.getHigh_val() > b.getHigh_val() && item.getHigh_val() > e.getHigh_val()
                     && item.getLow_val() > b.getLow_val() && item.getLow_val() > e.getLow_val()) {
                 //判断顶分型
-                //System.out.println("UP");
-                if (bFindFirst == false) {
-                    bFindFirst = true;
-                    firstPoint.tp = 1;
-                    firstPoint.close_val = firstItem.getLow_val();
-                    re_pa.add(firstPoint);
-
-                    lP = new ChanPoint();
-                    lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
-                    lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
-                    lP.tp = re_pa.get(re_pa.size() - 1).tp;
-                    lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
-                }
-
                 ChanPoint t = new ChanPoint();
                 t.tp = 0;
                 t.arr_pos = x;
                 t.trade_date = item.getTrade_date();
                 t.close_val = item.getHigh_val();
-                if (lP != null) {
-                    if (lP.tp != t.tp && Math.abs(lP.arr_pos - t.arr_pos) < 4) {
-                        // 两个顶底之间太近
-                        //System.out.println("lP.arr_pos:" + lP.arr_pos + " t.arr_pos:" + t.arr_pos);
-                    } else if (lP.tp == t.tp) {
-                        // 两个顶过近，取最高的
-                        if (t.close_val >= lP.close_val) {
-                            re_pa.remove(re_pa.size() - 1);
-                            re_pa.add(t);
-                            //System.out.println("Remove -> ADD");
-                        }
-                    } else {
-                        re_pa.add(t);
-                        //System.out.println("ADD");
-                    }
-                } else {
-                    re_pa.add(t);
-                    //System.out.println("ADD");
+
+                if (bReady == false) {
+                    bReady = true;
+                    firstPoint.tp = 1;
+                    firstPoint.close_val = firstItem.getLow_val();
+                    re_pa.add(firstPoint);
                 }
+
+                re_pa.add(t);
             } else if (item.getLow_val() < b.getLow_val() && item.getLow_val() < e.getLow_val()
                     && item.getHigh_val() < b.getHigh_val() && item.getHigh_val() < e.getHigh_val()) {
                 //判断底分型
-                //System.out.println("DOWN");
-                if (bFindFirst == false) {
-                    bFindFirst = true;
-                    firstPoint.tp = 0;
-                    firstPoint.close_val = firstItem.getHigh_val();
-                    re_pa.add(firstPoint);
-
-                    lP = new ChanPoint();
-                    lP.close_val = re_pa.get(re_pa.size() - 1).close_val;
-                    lP.arr_pos = re_pa.get(re_pa.size() - 1).arr_pos;
-                    lP.tp = re_pa.get(re_pa.size() - 1).tp;
-                    lP.trade_date = re_pa.get(re_pa.size() - 1).trade_date;
-                }
-
                 ChanPoint t = new ChanPoint();
                 t.tp = 1;
                 t.arr_pos = x;
                 t.trade_date = item.getTrade_date();
                 t.close_val = item.getLow_val();
-                if (lP != null) {
-                    if (lP.tp != t.tp && Math.abs(lP.arr_pos - t.arr_pos) < 4) {
-                        // 两个顶底之间太近
-                        //System.out.println("lP.arr_pos:" + lP.arr_pos + " t.arr_pos:" + t.arr_pos);
-                    } else if (lP.tp == t.tp) {
-                        // 两个底过近，取最底的
-                        if (t.close_val <= lP.close_val) {
-                            re_pa.remove(re_pa.size() - 1);
-                            re_pa.add(t);
-                            //System.out.println("Remove -> ADD");
-                        }
-                    } else {
-                        re_pa.add(t);
-                        //System.out.println("ADD");
-                    }
-                } else {
-                    re_pa.add(t);
-                    //System.out.println("ADD");
+
+                if (bReady == false) {
+                    bReady = true;
+                    firstPoint.tp = 0;
+                    firstPoint.close_val = firstItem.getHigh_val();
+                    re_pa.add(firstPoint);
                 }
+
+                re_pa.add(t);
             }
         }
 
-        /*for(int n=0; n<re_pa.size(); n++) {
-            ChanPoint t = re_pa.get(n);
-            System.out.println("PointData " + t.toString());
-        }*/
-        // System.out.println("PreClearPoint0: " + re_pa.get(0).toString());
+        System.out.println("顶底分型数量：" + re_pa.size());
 
-        return re_pa;
+        // 过滤线段的小微波
+        int oldCount, clearCount;
+        List<ChanPoint> re_pb, re_pc;
+        re_pb = re_pa;
+        while (true) {
+            oldCount = re_pb.size();
+            re_pc = clearChanPoint(re_pb);
+            clearCount = re_pc.size();
+            re_pb = re_pc;
+
+            //break;
+            if (clearCount == oldCount) break;
+        }
+
+        return re_pc;
+        //return re_pa;
     }
 
     private ChanLine makeChanLine(ChanPoint point1, ChanPoint point2) {
@@ -1215,6 +1306,30 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return re;
     }
 
+    private String getTotalIndexBetweenDateInfo(DAnalyseStockServiceI dAnalyseStockService, String ts_code, String begin_date, String end_date) {
+        String re = "";
+        HashMap<String, String> param = new HashMap<>();
+        D2TotalIndexBetweenDate data;
+
+        param.put("ts_code", ts_code);
+        if (Integer.parseInt(begin_date) > Integer.parseInt(end_date)) {
+            param.put("begin_date", end_date);
+            param.put("end_date", begin_date);
+        } else {
+            param.put("begin_date", begin_date);
+            param.put("end_date", end_date);
+        }
+
+        data = dAnalyseStockService.select2TotalIndexBetweenDate(param);
+        if (data != null) {
+            re = "周期数：" + data.getDay_count() + "<br>成交量：" + (double) Math.round(data.getSum_vol() / 10000 * 100) / 100 + "<br>振幅：" + data.getChg_rate();
+        }
+
+        System.out.println("getTotalIndexBetweenDateInfo(" + ts_code + ", " + begin_date + ", " + end_date + ")-> " + data);
+
+        return re;
+    }
+
     /**
      * 获取指数的技术分析数据
      *
@@ -1424,7 +1539,8 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
 
             int index;
-            //double sum_val;
+            String msg;
+            double e_v, b_v;
             List<LineCoord>[] markline_1f = new List[listChanLine_1f.size() - 1];
             List<LineCoord>[] markline_5f = new List[listChanLine_5f.size() - 1];
             eChartsResult.markline_data = new List[markline_5f.length + markline_1f.length];
@@ -1444,6 +1560,18 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 p2.coord[1] = itemEnd.close_val + "";
                 p2.lineStyle.color = "#CCCCCC";
 
+                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                b_v = Double.parseDouble(p1.coord[1]);
+                e_v = Double.parseDouble(p2.coord[1]);
+                if (b_v > e_v) {
+                    msg += "<br>50%位置：" + (double) Math.round(((b_v - e_v) / 2 + e_v) * 100) / 100;
+                    msg += "<br>61.8%位置：" + (double) Math.round(((b_v - e_v) * 0.618 + e_v) * 100) / 100;
+                } else {
+                    msg += "<br>50%位置：" + (double) Math.round(((e_v - b_v) / 2 + b_v) * 100) / 100;
+                    msg += "<br>61.8%位置：" + (double) Math.round(((e_v - b_v) * 0.618 + b_v) * 100) / 100;
+                }
+                p1.value = msg;
+                p2.value = p1.value;
                 listP.add(p1);
                 listP.add(p2);
                 markline_1f[index] = listP;
@@ -1467,18 +1595,18 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 p2.coord[0] = itemEnd.trade_date;
                 p2.coord[1] = itemEnd.close_val + "";
                 p2.lineStyle.color = "#9999ff";
-                /*sum_val = 0;
-                for (int t = itemFrom.arr_pos; t < itemEnd.arr_pos; t++) {
-                    sum_val += eChartsResult.series_data_val[t];
-                }
-                sum_val = sum_val / 10000;
-                p1.value = (double) Math.round(sum_val * 100) / 100;
-                p2.value = p1.value;
-                if (x >= listChanLine_1.size() - 6) {
-                    p1.label.show = true;
-                    p2.label.show = true;
-                }*/
 
+                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                b_v = Double.parseDouble(p1.coord[1]);
+                e_v = Double.parseDouble(p2.coord[1]);
+                if (b_v > e_v) {
+                    msg += "<br>50%位置：" + (double) Math.round(((b_v - e_v) / 2 + e_v) * 100) / 100;
+                    msg += "<br>61.8%位置：" + (double) Math.round(((b_v - e_v) * 0.618 + e_v) * 100) / 100;
+                } else {
+                    msg += "<br>61.8%位置：" + (double) Math.round(((e_v - b_v) * 0.618 + b_v) * 100) / 100;
+                }
+                p1.value = msg;
+                p2.value = p1.value;
                 listP.add(p1);
                 listP.add(p2);
                 markline_5f[index - markline_1f.length] = listP;
@@ -1521,6 +1649,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 AreaCoord p2 = listAreaCoord_1f.get(x + 1);
                 p1.itemStyle.color = "rgba(255, 204, 204, 0.8)";
                 p2.itemStyle.color = "rgba(255, 204, 204, 0.8)";
+                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                b_v = Double.parseDouble(p1.coord[1]);
+                e_v = Double.parseDouble(p2.coord[1]);
+                if (b_v > e_v) {
+                    msg += "<br>50%位置：" + (double) Math.round(((b_v - e_v) / 2 + e_v) * 100) / 100;
+                } else {
+                    msg += "<br>50%位置：" + (double) Math.round(((e_v - b_v) / 2 + b_v) * 100) / 100;
+                }
+                p1.value = msg;
+                p2.value = p1.value;
                 listP.add(p1);
                 listP.add(p2);
                 eChartsResult.markarea_data[index++] = listP;

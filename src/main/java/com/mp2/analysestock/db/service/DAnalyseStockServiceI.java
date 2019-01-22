@@ -37,4 +37,6 @@ public interface DAnalyseStockServiceI {
     List<DEveryDayHsgt> selectEveryDayHsgt();
 
     List<SelectItem> selectFutInfoByKey(HashMap<String, String> param);
+
+    D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param);
 }

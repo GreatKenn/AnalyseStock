@@ -119,6 +119,13 @@
         <result column="amount" property="amount_val" jdbcType="INTEGER"/>
     </resultMap>
 
+    <resultMap id="TotalIndexBetweenDateResultMap" type="com.mp2.analysestock.db.model.D2TotalIndexBetweenDate">
+        <result column="day_count" property="day_count" jdbcType="INTEGER"/>
+        <result column="sum_vol" property="sum_vol" jdbcType="DECIMAL"/>
+        <result column="chg_rate" property="chg_rate" jdbcType="DECIMAL"/>
+        <result column="val_50" property="val_50" jdbcType="DECIMAL"/>
+    </resultMap>
+
     <resultMap id="EveryDayTotalResultMap" type="com.mp2.analysestock.db.model.DEveryDayTotal">
         <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
         <result column="sh_close" property="sh_close" jdbcType="DECIMAL"/>
@@ -257,6 +264,12 @@
         from d2_fut_daily
         where `ts_code` = #{ts_code}
         order by trade_date
+    </select>
+
+    <select id="select2TotalIndexBetweenDate" resultMap="TotalIndexBetweenDateResultMap" parameterType="java.util.HashMap">
+        select count(1) as day_count, round(sum(`vol`), 2) as sum_vol, round((max(`high`)-min(`low`))/min(`low`)*100,2) as chg_rate
+        from d2_index_daily
+        where `ts_code` = #{ts_code} and `trade_date` &gt;= #{begin_date} and `trade_date` &lt;= #{end_date}
     </select>
 
     <select id="select2IndexMinDateByYear" resultMap="IndexDataResultMap" parameterType="java.util.HashMap">

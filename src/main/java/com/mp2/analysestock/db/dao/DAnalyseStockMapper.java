@@ -70,4 +70,11 @@ public interface DAnalyseStockMapper {
      * @return
      */
     List<SelectItem> selectFutInfoByKey(HashMap<String, String> param);
+
+    /**
+     * 根据指数编码和日期范围，统计数据
+     * @param param
+     * @return
+     */
+    D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param);
 }
