@@ -159,6 +159,39 @@
         <result column="trade_date" property="text" jdbcType="VARCHAR"/>
     </resultMap>
 
+    <resultMap id="Select2ResultMap_analyseK" type="com.mp2.analysestock.db.model.D2AnalyseKResult">
+        <result column="ts_code" property="ts_code" jdbcType="VARCHAR"/>
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="open" property="open_val" jdbcType="DECIMAL"/>
+        <result column="high" property="high_val" jdbcType="DECIMAL"/>
+        <result column="low" property="low_val" jdbcType="DECIMAL"/>
+        <result column="close" property="close_val" jdbcType="DECIMAL"/>
+        <result column="vol" property="vol_val" jdbcType="DECIMAL"/>
+        <result column="ema_5" property="ema_5_val" jdbcType="DECIMAL"/>
+        <result column="ema_10" property="ema_10_val" jdbcType="DECIMAL"/>
+        <result column="ema_20" property="ema_20_val" jdbcType="DECIMAL"/>
+        <result column="ema_30" property="ema_30_val" jdbcType="DECIMAL"/>
+        <result column="ema_250" property="ema_250_val" jdbcType="DECIMAL"/>
+        <result column="bias_5" property="bias_5_val" jdbcType="DECIMAL"/>
+        <result column="bias_20" property="bias_20_val" jdbcType="DECIMAL"/>
+        <result column="macd" property="macd_val" jdbcType="DECIMAL"/>
+        <result column="psy" property="psy_val" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="Select2ResultMap_analyseRiche" type="com.mp2.analysestock.db.model.D2AnalyseRicheResult">
+        <result column="ts_code" property="ts_code" jdbcType="VARCHAR"/>
+        <result column="class" property="class_str" jdbcType="VARCHAR"/>
+        <result column="order" property="order_val" jdbcType="INTEGER"/>
+        <result column="data_json" property="data_json" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="Select2ResultMap_cfgFixResult" type="com.mp2.analysestock.db.model.D2CfgFixResult">
+        <result column="ts_code" property="ts_code" jdbcType="VARCHAR"/>
+        <result column="class" property="class_str" jdbcType="VARCHAR"/>
+        <result column="matcher" property="matcher" jdbcType="VARCHAR"/>
+        <result column="data_json" property="data_json" jdbcType="VARCHAR"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
         yyyymmdd, sh_lup10_count, sz_lup10_count, sh_lup10ag_count,
     sz_lup10ag_count, sh_lup10nc_count, sz_lup10nc_count, sh_lup10l2_count, sz_lup10l2_count, sh_lup10l3_count,
@@ -266,7 +299,8 @@
         order by trade_date
     </select>
 
-    <select id="select2TotalIndexBetweenDate" resultMap="TotalIndexBetweenDateResultMap" parameterType="java.util.HashMap">
+    <select id="select2TotalIndexBetweenDate" resultMap="TotalIndexBetweenDateResultMap"
+            parameterType="java.util.HashMap">
         select count(1) as day_count, round(sum(`vol`), 2) as sum_vol, round((max(`high`)-min(`low`))/min(`low`)*100,2) as chg_rate
         from d2_index_daily
         where `ts_code` = #{ts_code} and `trade_date` &gt;= #{begin_date} and `trade_date` &lt;= #{end_date}
@@ -306,10 +340,70 @@
         group by b.trade_date
     </select>
 
-    <select id="selectFutInfoByKey" parameterType="java.util.HashMap"  resultMap="Select2ResultMap_fut_base">
+    <select id="selectFutInfoByKey" parameterType="java.util.HashMap" resultMap="Select2ResultMap_fut_base">
         select `ts_code`, `name`
         from d2_fut_basic
         where `ts_code` like concat('%', #{key,jdbcType=VARCHAR}, '%') or `name` like concat('%', #{key,jdbcType=VARCHAR}, '%')
     </select>
 
+    <select id="selectAnalyseKResult" parameterType="java.util.HashMap" resultMap="Select2ResultMap_analyseK">
+        select `ts_code`, `trade_date`, `open`, `high`, `low`, `close`, `vol`, `ema_5`, `ema_10`, `ema_20`, `ema_30`
+        , `ema_250`, `bias_5`, `bias_20`, `macd`, `psy`
+        from d2_analyse_k_result
+        where `ts_code` = #{ts_code,jdbcType=VARCHAR}
+        order by `trade_date`
+    </select>
+    <delete id="deleteAnalyseKResult" parameterType="java.lang.String">
+        delete from d2_analyse_k_result
+        where ts_code = #{ts_code,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insertAnalyseKResult" parameterType="com.mp2.analysestock.db.model.D2AnalyseKResult">
+        insert into d2_analyse_k_result (`ts_code`, `trade_date`, `open`, `high`, `low`, `close`, `vol`, `ema_5`, `ema_10`
+        , `ema_20`, `ema_30`, `ema_250`, `bias_5`, `bias_20`, `macd`, `psy`)
+        values (
+        #{ts_code,jdbcType=VARCHAR},
+        #{trade_date,jdbcType=VARCHAR},
+        #{open_val,jdbcType=DECIMAL},
+        #{high_val,jdbcType=DECIMAL},
+        #{low_val,jdbcType=DECIMAL},
+        #{close_val,jdbcType=DECIMAL},
+        #{vol_val,jdbcType=DECIMAL},
+        #{ema_5_val,jdbcType=DECIMAL},
+        #{ema_10_val,jdbcType=DECIMAL},
+        #{ema_20_val,jdbcType=DECIMAL},
+        #{ema_30_val,jdbcType=DECIMAL},
+        #{ema_250_val,jdbcType=DECIMAL},
+        #{bias_5_val,jdbcType=DECIMAL},
+        #{bias_20_val,jdbcType=DECIMAL},
+        #{macd_val,jdbcType=DECIMAL},
+        #{psy_val,jdbcType=DECIMAL}
+        )
+    </insert>
+
+    <select id="selectAnalyseRicheResult" parameterType="java.util.HashMap" resultMap="Select2ResultMap_analyseRiche">
+        select `ts_code`, `class`, `order`, `data_json`
+        from d2_analyse_riche_result
+        where `ts_code` = #{ts_code,jdbcType=VARCHAR} and `class` = #{class_str,jdbcType=VARCHAR}
+        order by `order`
+    </select>
+    <delete id="deleteAnalyseRicheResult" parameterType="java.lang.String">
+        delete from d2_analyse_riche_result
+        where ts_code = #{ts_code,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insertAnalyseRicheResult" parameterType="com.mp2.analysestock.db.model.D2AnalyseRicheResult">
+        insert into d2_analyse_riche_result (`ts_code`, `class`, `order`, `data_json`)
+        values (
+        #{ts_code,jdbcType=VARCHAR},
+        #{class_str,jdbcType=VARCHAR},
+        #{order_val,jdbcType=INTEGER},
+        #{data_json,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <select id="selectCfgFixResult" parameterType="java.util.HashMap" resultMap="Select2ResultMap_cfgFixResult">
+        select `ts_code`, `class`, `matcher`, `data_json`
+        from `d2_cfg_fixresult`
+        where `ts_code` = #{ts_code,jdbcType=VARCHAR} and `class` = #{class_str,jdbcType=VARCHAR}
+        order by `matcher`
+    </select>
 </mapper>

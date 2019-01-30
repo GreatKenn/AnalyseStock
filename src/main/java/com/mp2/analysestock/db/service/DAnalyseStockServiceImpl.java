@@ -28,41 +28,96 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
     }
 
     @Override
-    public List<DBaseData> selectIndex399006(HashMap<String, Object> param) { return mapper.selectIndex399006(param); }
+    public List<DBaseData> selectIndex399006(HashMap<String, Object> param) {
+        return mapper.selectIndex399006(param);
+    }
 
     @Override
-    public List<DEventData> selectEventData() { return mapper.selectEventData(); }
+    public List<DEventData> selectEventData() {
+        return mapper.selectEventData();
+    }
 
     @Override
-    public List<DYearWeekCount> selectNewStockCountByYearWeek() { return mapper.selectNewStockCountByYearWeek(); }
+    public List<DYearWeekCount> selectNewStockCountByYearWeek() {
+        return mapper.selectNewStockCountByYearWeek();
+    }
 
     @Override
-    public List<DYearWeekCountByType> selectNewStockCountByYearWeekType() { return mapper.selectNewStockCountByYearWeekType(); }
+    public List<DYearWeekCountByType> selectNewStockCountByYearWeekType() {
+        return mapper.selectNewStockCountByYearWeekType();
+    }
 
     @Override
-    public List<DFeelingUpDown10> selectFeelingUpDown10() { return mapper.selectFeelingUpDown10(); }
+    public List<DFeelingUpDown10> selectFeelingUpDown10() {
+        return mapper.selectFeelingUpDown10();
+    }
 
     @Override
-    public List<D2IndexData> select2IndexData(HashMap<String, Object> param) { return mapper.select2IndexData(param); }
+    public List<D2IndexData> select2IndexData(HashMap<String, Object> param) {
+        return mapper.select2IndexData(param);
+    }
 
     @Override
-    public List<D2FutData> select2FutData(HashMap<String, Object> param) { return mapper.select2FutData(param); }
+    public List<D2FutData> select2FutData(HashMap<String, Object> param) {
+        return mapper.select2FutData(param);
+    }
 
     @Override
-    public List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param) { return mapper.select2IndexMinDateByYear(param); }
+    public List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param) {
+        return mapper.select2IndexMinDateByYear(param);
+    }
 
     @Override
-    public List<DEveryDayTotal> selectEveryDayTotal() { return mapper.selectEveryDayTotal(); }
+    public List<DEveryDayTotal> selectEveryDayTotal() {
+        return mapper.selectEveryDayTotal();
+    }
 
     @Override
-    public List<DEveryDayMargin> selectEveryDayMargin() { return mapper.selectEveryDayMargin(); }
+    public List<DEveryDayMargin> selectEveryDayMargin() {
+        return mapper.selectEveryDayMargin();
+    }
 
     @Override
-    public List<DEveryDayHsgt> selectEveryDayHsgt() { return mapper.selectEveryDayHsgt(); }
+    public List<DEveryDayHsgt> selectEveryDayHsgt() {
+        return mapper.selectEveryDayHsgt();
+    }
 
     @Override
-    public List<SelectItem> selectFutInfoByKey(HashMap<String, String> param) { return mapper.selectFutInfoByKey(param); }
+    public List<SelectItem> selectFutInfoByKey(HashMap<String, String> param) {
+        return mapper.selectFutInfoByKey(param);
+    }
 
     @Override
-    public D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param) { return mapper.select2TotalIndexBetweenDate(param); }
+    public D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param) {
+        return mapper.select2TotalIndexBetweenDate(param);
+    }
+
+    @Override
+    public void deleteAnalyseKResult(String ts_code) {
+        mapper.deleteAnalyseKResult(ts_code);
+    }
+
+    @Override
+    public void insertAnalyseKResult(com.mp2.analysestock.db.model.D2AnalyseKResult analyseKResult) {
+        mapper.insertAnalyseKResult(analyseKResult);
+    }
+
+    @Override
+    public void deleteAnalyseRicheResult(String ts_code) {
+        mapper.deleteAnalyseRicheResult(ts_code);
+    }
+
+    @Override
+    public void insertAnalyseRicheResult(com.mp2.analysestock.db.model.D2AnalyseRicheResult analyseRicheResult) {
+        mapper.insertAnalyseRicheResult(analyseRicheResult);
+    }
+
+    @Override
+    public List<D2AnalyseKResult> selectAnalyseKResult(HashMap<String, String> param) { return mapper.selectAnalyseKResult(param); }
+
+    @Override
+    public List<D2AnalyseRicheResult> selectAnalyseRicheResult(HashMap<String, String> param) { return mapper.selectAnalyseRicheResult(param); }
+
+    @Override
+    public List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param) { return mapper.selectCfgFixResult(param); }
 }

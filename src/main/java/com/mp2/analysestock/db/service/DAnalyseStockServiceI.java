@@ -39,4 +39,18 @@ public interface DAnalyseStockServiceI {
     List<SelectItem> selectFutInfoByKey(HashMap<String, String> param);
 
     D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param);
+
+    void deleteAnalyseKResult(String ts_code);
+
+    void insertAnalyseKResult(com.mp2.analysestock.db.model.D2AnalyseKResult analyseKResult);
+
+    void deleteAnalyseRicheResult(String ts_code);
+
+    void insertAnalyseRicheResult(com.mp2.analysestock.db.model.D2AnalyseRicheResult analyseRicheResult);
+
+    List<D2AnalyseKResult> selectAnalyseKResult(HashMap<String, String> param);
+
+    List<D2AnalyseRicheResult> selectAnalyseRicheResult(HashMap<String, String> param);
+
+    List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param);
 }

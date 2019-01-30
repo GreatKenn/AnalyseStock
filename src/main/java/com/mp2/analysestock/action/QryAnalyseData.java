@@ -8,13 +8,15 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.tictactec.ta.lib.Core;
+import com.tictactec.ta.lib.MInteger;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tictactec.ta.lib.Core;
-import com.tictactec.ta.lib.MInteger;
 
 import com.mp2.analysestock.db.model.*;
+import com.mp2.analysestock.action.structure.*;
+import com.mp2.util.JsonUtil;
 import com.mp2.analysestock.commons.MP2BaseActionSupport;
 import com.mp2.analysestock.db.service.DAnalyseStockServiceI;
 
@@ -72,71 +74,6 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
     }
 
-    class ItemStyle {
-        public String color = "red";
-    }
-
-    class ChanPoint {
-        public short tp; // 0:顶分型 1:底分型
-        public int arr_pos;
-        public String trade_date;
-        public double close_val;
-
-        public String toString() {
-            String re = "tp:" + tp + " trade_date:" + trade_date + " close_val:" + close_val;
-            return re;
-        }
-    }
-
-    class ChanLine {
-        public int arr_pos;
-        public ChanPoint highPoint;
-        public ChanPoint lowPoint;
-
-        public String toString() {
-            return "Low(" + lowPoint.toString() + ") High(" + highPoint.toString() + ")";
-        }
-    }
-
-    class MarkLine {
-        public String type = "";
-        public String name = "";
-    }
-
-    class LineStyle {
-        public String color = "blue";
-        public String type = "solid";
-    }
-
-    class Label {
-        public boolean show = false;
-        public String position = "middle";
-    }
-
-    class PointCoord_base {
-        public String symbol = "circle";
-        public int symbolSize = 8;
-        public ItemStyle itemStyle = new ItemStyle();
-        public String[] coord = new String[2];
-    }
-
-    class PointCoord_t1 extends PointCoord_base {
-        public double value = 0;
-    }
-
-    class LineCoord {
-        public String value = "";
-        public Label label = new Label();
-        public LineStyle lineStyle = new LineStyle();
-        public String[] coord = new String[2];
-    }
-
-    class AreaCoord {
-        public String value = "";
-        public ItemStyle itemStyle = new ItemStyle();
-        public String[] coord = new String[2];
-    }
-
     class EChartsResult_K {
         public String[] legend_data;
         public HashMap<String, Boolean> legend_selected;
@@ -153,24 +90,224 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         public double[] series_data_macd;
         public double[] series_data_psy;
         public List<LineCoord>[] markline_data;
-        public List<PointCoord_base> markpoint_data = new ArrayList<>();
         public List<AreaCoord>[] markarea_data;
+        public List<PointCoord> markpoint_data = new ArrayList<>();
 
-        public EChartsResult_K(int xCount, int yCount) {
-            legend_data = new String[yCount];
-            legend_selected = new HashMap();
-            xAxis_data = new String[xCount];
-            series_data_k = new double[xCount][4];
-            series_data_vol = new double[xCount];
-            series_data_ema_5 = new double[xCount];
-            series_data_ema_10 = new double[xCount];
-            series_data_ema_20 = new double[xCount];
-            series_data_ema_30 = new double[xCount];
-            series_data_ema_250 = new double[xCount];
-            series_data_bias_5 = new double[xCount];
-            series_data_bias_20 = new double[xCount];
-            series_data_macd = new double[xCount];
-            series_data_psy = new double[xCount];
+        private String ts_code;
+        private String ts_name;
+
+        public EChartsResult_K(String ts_code, String ts_name) {
+            this.ts_code = ts_code;
+            this.ts_name = ts_name;
+        }
+
+        public EChartsResult_K(String ts_code, String ts_name, int xCount, int yCount) {
+            this.ts_code = ts_code;
+            this.ts_name = ts_name;
+            this.legend_data = new String[yCount];
+            this.legend_selected = new HashMap();
+            this.xAxis_data = new String[xCount];
+            this.series_data_k = new double[xCount][4];
+            this.series_data_vol = new double[xCount];
+            this.series_data_ema_5 = new double[xCount];
+            this.series_data_ema_10 = new double[xCount];
+            this.series_data_ema_20 = new double[xCount];
+            this.series_data_ema_30 = new double[xCount];
+            this.series_data_ema_250 = new double[xCount];
+            this.series_data_bias_5 = new double[xCount];
+            this.series_data_bias_20 = new double[xCount];
+            this.series_data_macd = new double[xCount];
+            this.series_data_psy = new double[xCount];
+        }
+
+        /**
+         * 保存数据到数据库中
+         */
+        public void save() {
+            DAnalyseStockServiceI dAnalyseStockService;
+
+            dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+            // 保存每日数据
+            dAnalyseStockService.deleteAnalyseKResult(ts_code);
+            for (int n = 0; n < xAxis_data.length; n++) {
+                D2AnalyseKResult analyseKResult = new D2AnalyseKResult();
+                analyseKResult.setTs_code(ts_code);
+                analyseKResult.setTrade_date(xAxis_data[n]);
+                analyseKResult.setOpen_val(series_data_k[n][0]);
+                analyseKResult.setClose_val(series_data_k[n][1]);
+                analyseKResult.setLow_val(series_data_k[n][2]);
+                analyseKResult.setHigh_val(series_data_k[n][3]);
+                analyseKResult.setVol_val(series_data_vol[n]);
+                analyseKResult.setEma_5_val(series_data_ema_5[n]);
+                analyseKResult.setEma_10_val(series_data_ema_10[n]);
+                analyseKResult.setEma_20_val(series_data_ema_20[n]);
+                analyseKResult.setEma_30_val(series_data_ema_30[n]);
+                analyseKResult.setEma_250_val(series_data_ema_250[n]);
+                analyseKResult.setBias_5_val(series_data_bias_5[n]);
+                analyseKResult.setBias_20_val(series_data_bias_20[n]);
+                analyseKResult.setMacd_val(series_data_macd[n]);
+                analyseKResult.setPsy_val(series_data_psy[n]);
+
+                dAnalyseStockService.insertAnalyseKResult(analyseKResult);
+            }
+
+            // 保存线段、区域、点这类复合数据
+            dAnalyseStockService.deleteAnalyseRicheResult(ts_code);
+            for (int n = 0; n < markline_data.length; n++) {
+                D2AnalyseRicheResult analyseRicheResult = new D2AnalyseRicheResult();
+                List<LineCoord> listLine = markline_data[n];
+                analyseRicheResult.setTs_code(ts_code);
+                analyseRicheResult.setClass_str("markline");
+                analyseRicheResult.setOrder_val(n);
+                analyseRicheResult.setData_json(JsonUtil.toJSONString(listLine));
+
+                dAnalyseStockService.insertAnalyseRicheResult(analyseRicheResult);
+            }
+            for (int n = 0; n < markarea_data.length; n++) {
+                D2AnalyseRicheResult analyseRicheResult = new D2AnalyseRicheResult();
+                List<AreaCoord> listArea = markarea_data[n];
+                analyseRicheResult.setTs_code(ts_code);
+                analyseRicheResult.setClass_str("markarea");
+                analyseRicheResult.setOrder_val(n);
+                analyseRicheResult.setData_json(JsonUtil.toJSONString(listArea));
+
+                dAnalyseStockService.insertAnalyseRicheResult(analyseRicheResult);
+            }
+            for (int n = 0; n < markpoint_data.size(); n++) {
+                D2AnalyseRicheResult analyseRicheResult = new D2AnalyseRicheResult();
+                PointCoord point = markpoint_data.get(n);
+                analyseRicheResult.setTs_code(ts_code);
+                analyseRicheResult.setClass_str("markpoint");
+                analyseRicheResult.setOrder_val(n);
+                analyseRicheResult.setData_json(JsonUtil.toJSONString(point));
+
+                dAnalyseStockService.insertAnalyseRicheResult(analyseRicheResult);
+            }
+            //单个参数
+            {
+                D2AnalyseRicheResult analyseRicheResult = new D2AnalyseRicheResult();
+                analyseRicheResult.setTs_code(ts_code);
+                analyseRicheResult.setClass_str("legend_data");
+                analyseRicheResult.setOrder_val(0);
+                analyseRicheResult.setData_json(JsonUtil.toJSONString(this.legend_data));
+
+                dAnalyseStockService.insertAnalyseRicheResult(analyseRicheResult);
+            }
+            //单个参数
+            {
+                D2AnalyseRicheResult analyseRicheResult = new D2AnalyseRicheResult();
+                analyseRicheResult.setTs_code(ts_code);
+                analyseRicheResult.setClass_str("legend_selected");
+                analyseRicheResult.setOrder_val(0);
+                analyseRicheResult.setData_json(JsonUtil.toJSONString(this.legend_selected));
+
+                dAnalyseStockService.insertAnalyseRicheResult(analyseRicheResult);
+            }
+        }
+
+        /**
+         * 从数据库中读取数据
+         */
+        public void load() {
+            int sizeItems;
+            HashMap<String, String> param = new HashMap<>();
+            List<D2AnalyseRicheResult> listAnalyseRicheResult;
+            DAnalyseStockServiceI dAnalyseStockService;
+
+            dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+            param.clear();
+            param.put("ts_code", ts_code);
+            List<D2AnalyseKResult> listAnalyseKResult = dAnalyseStockService.selectAnalyseKResult(param);
+            sizeItems = listAnalyseKResult.size();
+            this.xAxis_data = new String[sizeItems];
+            this.series_data_k = new double[sizeItems][4];
+            this.series_data_vol = new double[sizeItems];
+            this.series_data_ema_5 = new double[sizeItems];
+            this.series_data_ema_10 = new double[sizeItems];
+            this.series_data_ema_20 = new double[sizeItems];
+            this.series_data_ema_30 = new double[sizeItems];
+            this.series_data_ema_250 = new double[sizeItems];
+            this.series_data_bias_5 = new double[sizeItems];
+            this.series_data_bias_20 = new double[sizeItems];
+            this.series_data_macd = new double[sizeItems];
+            this.series_data_psy = new double[sizeItems];
+            for (int n = 0; n < sizeItems; n++) {
+                D2AnalyseKResult item = listAnalyseKResult.get(n);
+                this.xAxis_data[n] = item.getTrade_date();
+                series_data_k[n][0] = item.getOpen_val();
+                series_data_k[n][1] = item.getClose_val();
+                series_data_k[n][2] = item.getLow_val();
+                series_data_k[n][3] = item.getHigh_val();
+                series_data_vol[n] = item.getVol_val();
+                series_data_ema_5[n] = item.getEma_5_val();
+                series_data_ema_10[n] = item.getEma_10_val();
+                series_data_ema_20[n] = item.getEma_20_val();
+                series_data_ema_30[n] = item.getEma_30_val();
+                series_data_ema_250[n] = item.getEma_250_val();
+                series_data_bias_5[n] = item.getBias_5_val();
+                series_data_bias_20[n] = item.getBias_20_val();
+                series_data_macd[n] = item.getMacd_val();
+                series_data_psy[n] = item.getPsy_val();
+            }
+
+            /*
+            * public String[] legend_data;
+            # public HashMap<String, Boolean> legend_selected;
+            * */
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "legend_data");
+            listAnalyseRicheResult = dAnalyseStockService.selectAnalyseRicheResult(param);
+            sizeItems = listAnalyseRicheResult.size();
+            if (sizeItems > 0) {
+                D2AnalyseRicheResult item = listAnalyseRicheResult.get(0);
+                this.legend_data = JsonUtil.getEntity(item.getData_json(), String[].class);
+            }
+
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "legend_selected");
+            listAnalyseRicheResult = dAnalyseStockService.selectAnalyseRicheResult(param);
+            sizeItems = listAnalyseRicheResult.size();
+            if (sizeItems > 0) {
+                D2AnalyseRicheResult item = listAnalyseRicheResult.get(0);
+                this.legend_selected = JsonUtil.getEntity(item.getData_json(), HashMap.class);
+            }
+
+            // markline
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "markline");
+            listAnalyseRicheResult = dAnalyseStockService.selectAnalyseRicheResult(param);
+            sizeItems = listAnalyseRicheResult.size();
+            this.markline_data = new List[sizeItems];
+            for (int n = 0; n < sizeItems; n++) {
+                D2AnalyseRicheResult item = listAnalyseRicheResult.get(n);
+                this.markline_data[n] = JsonUtil.getEntity(item.getData_json(), List.class);
+            }
+            // markarea
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "markarea");
+            listAnalyseRicheResult = dAnalyseStockService.selectAnalyseRicheResult(param);
+            sizeItems = listAnalyseRicheResult.size();
+            this.markarea_data = new List[sizeItems];
+            for (int n = 0; n < sizeItems; n++) {
+                D2AnalyseRicheResult item = listAnalyseRicheResult.get(n);
+                this.markarea_data[n] = JsonUtil.getEntity(item.getData_json(), List.class);
+            }
+            // markpoint
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "markpoint");
+            listAnalyseRicheResult = dAnalyseStockService.selectAnalyseRicheResult(param);
+            sizeItems = listAnalyseRicheResult.size();
+            for (int n = 0; n < sizeItems; n++) {
+                D2AnalyseRicheResult item = listAnalyseRicheResult.get(n);
+                this.markpoint_data.add(JsonUtil.getEntity(item.getData_json(), PointCoord.class));
+            }
         }
     }
 
@@ -547,78 +684,13 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return re;
     }
 
-    private ChanPoint getChanMaxGG(ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
-        ChanPoint t;
-
-        if (a1.close_val > a2.close_val) {
-            t = a1;
-            a1 = a2;
-            a2 = t;
-        }
-
-        if (b1.close_val > b2.close_val) {
-            t = b1;
-            b1 = b2;
-            b2 = t;
-        }
-
-        if (a1.close_val > a2.close_val) {
-            if (a1.close_val > b1.close_val)
-                return a1;
-            else
-                return b1;
-        } else {
-            if (a2.close_val > b2.close_val)
-                return a2;
-            else
-                return b2;
-        }
-    }
-
-    private ChanPoint getChanMaxDD(ChanPoint a1, ChanPoint a2, ChanPoint b1, ChanPoint b2) {
-        ChanPoint t;
-
-        if (a1.close_val > a2.close_val) {
-            t = a1;
-            a1 = a2;
-            a2 = t;
-        }
-
-        if (b1.close_val > b2.close_val) {
-            t = b1;
-            b1 = b2;
-            b2 = t;
-        }
-
-        if (a1.close_val < a2.close_val) {
-            if (a1.close_val < b1.close_val)
-                return a1;
-            else
-                return b1;
-        } else {
-            if (a2.close_val < b2.close_val)
-                return a2;
-            else
-                return b2;
-        }
-    }
-
-    private List<ChanPoint> analyseChanPoint_index(List<D2IndexData> rich_data) {
+    private List<ChanPoint> analyseChanPoint_index(String ts_code, List<D2IndexData> rich_data) {
         List<D2BaseData> re = new ArrayList<>();
         for (int i = 0; i < rich_data.size(); i++) {
             D2BaseData item = rich_data.get(i);
             re.add(item);
         }
-        return analyseChanPoint(re);
-    }
-
-    private List<ChanPoint> analyseChanPoint_fut(List<D2FutData> rich_data) {
-        List<D2BaseData> re = new ArrayList<>();
-        for (int i = 0; i < rich_data.size(); i++) {
-            D2BaseData item = rich_data.get(i);
-            re.add(item);
-        }
-        return analyseChanPoint(re);
+        return analyseChanPoint(ts_code, re);
     }
 
     private List<D2BaseData> clearK_index(List<D2IndexData> rich_data) {
@@ -896,7 +968,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
      * @param rich_data
      * @return
      */
-    private List<ChanPoint> analyseChanPoint(List<D2BaseData> rich_data) {
+    private List<ChanPoint> analyseChanPoint(String ts_code, List<D2BaseData> rich_data) {
         List<D2BaseData> clear_k;
 
         // 合并包含关系的K线
@@ -954,7 +1026,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
         }
 
-        System.out.println("顶底分型数量：" + re_pa.size());
+        System.out.println("(清理前)顶底分型数量：" + re_pa.size());
 
         // 过滤线段的小微波
         int oldCount, clearCount;
@@ -970,7 +1042,34 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             if (clearCount == oldCount) break;
         }
 
-        return re_pc;
+        System.out.println("(清理后)顶底分型数量：" + re_pa.size());
+
+        // 通过配置表数据，手动补充
+        List<ChanPoint> re_pf = new ArrayList<>();
+        List<D2CfgFixResult> listCfg = getCfgFixResult(ts_code, "point_1f");
+        HashMap<String, String> hsCfg = new HashMap<>();
+        for (D2CfgFixResult cfg : listCfg) {
+            hsCfg.put(cfg.getMatcher(), cfg.getData_json());
+            System.out.println("Key:" + cfg.getMatcher() + " -> " + cfg.getData_json());
+        }
+        System.out.println("待补充配置记录数：" + hsCfg.size());
+        for (ChanPoint item : re_pc) {
+            re_pf.add(item);
+            String key = item.trade_date;
+            if (hsCfg.containsKey(key)) {
+                System.out.println("Found Key:" + key);
+                ChanPoint[] listTem = JsonUtil.getEntity(hsCfg.get(key), ChanPoint[].class);
+                for (ChanPoint cp : listTem) {
+                    re_pf.add(cp);
+                    System.out.println("补充：" + cp.toString());
+                }
+            }
+        }
+
+        System.out.println("(补充后)顶底分型数量：" + re_pa.size());
+
+        return re_pf;
+        //return re_pc;
         //return re_pa;
     }
 
@@ -1325,7 +1424,34 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             re = "周期数：" + data.getDay_count() + "<br>成交量：" + (double) Math.round(data.getSum_vol() / 10000 * 100) / 100 + "<br>振幅：" + data.getChg_rate();
         }
 
-        System.out.println("getTotalIndexBetweenDateInfo(" + ts_code + ", " + begin_date + ", " + end_date + ")-> " + data);
+        // System.out.println("getTotalIndexBetweenDateInfo(" + ts_code + ", " + begin_date + ", " + end_date + ")-> " + data);
+
+        return re;
+    }
+
+    /**
+     * 根据编码、类别获取补充的配置数据
+     *
+     * @param ts_code
+     * @param class_str
+     * @return
+     */
+    private List<D2CfgFixResult> getCfgFixResult(String ts_code, String class_str) {
+        List<D2CfgFixResult> re = null;
+        DAnalyseStockServiceI dAnalyseStockService;
+
+        dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+        try {
+            HashMap<String, String> param = new HashMap<>();
+
+            param.put("ts_code", ts_code);
+            param.put("class_str", class_str);
+            re = dAnalyseStockService.selectCfgFixResult(param);
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
 
         return re;
     }
@@ -1338,6 +1464,37 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     private void getIndexesTech(String ts_code, String ts_name) {
         ObjectMapper objMapper = new ObjectMapper();
         StringWriter witStr = new StringWriter();
+
+        try {
+            EChartsResult_K eChartsResult = new EChartsResult_K(ts_code, ts_name);
+
+            // 装载数据库里的数据
+            eChartsResult.load();
+
+            try {
+                objMapper.writeValue(witStr, eChartsResult);
+            } catch (JsonGenerationException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (JsonMappingException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage());
+            }
+
+            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
+
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 分析指数的技术分析数据并保存到表中
+     *
+     * @return
+     */
+    private void anaIndexesTech(String ts_code, String ts_name) {
         List<D2IndexData> index_data, index_mindate_year;
         DAnalyseStockServiceI dAnalyseStockService;
 
@@ -1351,7 +1508,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             index_mindate_year = dAnalyseStockService.select2IndexMinDateByYear(param);
 
             String[] legend = {ts_name, "成交量", "EMA:5", "EMA:10", "EMA:20", "EMA:30", "EMA:250", "BIAS:5", "BIAS:20", "MACD", "PSY"};
-            EChartsResult_K eChartsResult = new EChartsResult_K(index_data.size(), legend.length - 1);
+            EChartsResult_K eChartsResult = new EChartsResult_K(ts_code, ts_name, index_data.size(), legend.length - 1);
 
             eChartsResult.legend_data = legend.clone();
             eChartsResult.legend_selected.clear();
@@ -1474,14 +1631,14 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
             for (int x = 0; x < eChartsResult.xAxis_data.length; x++) {
                 if ((eChartsResult.series_data_bias_5[x] + eChartsResult.series_data_bias_20[x]) <= bias5_20_down) {
-                    PointCoord_base p = new PointCoord_base();
+                    PointCoord p = new PointCoord();
                     p.coord[0] = eChartsResult.xAxis_data[x];
                     p.coord[1] = eChartsResult.series_data_k[x][2] + "";
                     p.symbol = "arrow";
                     p.itemStyle.color = "#660000"; // 红
                     eChartsResult.markpoint_data.add(p);
                 } else if (eChartsResult.series_data_bias_5[x] <= bias5_down && eChartsResult.series_data_bias_20[x] < bias20_down) {
-                    PointCoord_base p = new PointCoord_base();
+                    PointCoord p = new PointCoord();
                     p.coord[0] = eChartsResult.xAxis_data[x];
                     p.coord[1] = eChartsResult.series_data_k[x][2] + "";
                     p.symbol = "arrow";
@@ -1507,18 +1664,18 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             // 标记每年开始的第一个交易日 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             for (int x = 0; x < index_mindate_year.size(); x++) {
                 D2IndexData item = index_mindate_year.get(x);
-                PointCoord_t1 p = new PointCoord_t1();
+                PointCoord p = new PointCoord();
                 p.coord[0] = item.getTrade_date();
                 p.coord[1] = item.getHigh_val() + "";
                 p.symbol = "pin";
                 p.symbolSize = 20;
-                p.value = Double.parseDouble(item.getTrade_date().substring(0, 4));
+                p.value = item.getTrade_date().substring(0, 4);
                 p.itemStyle.color = "red"; // 红
                 eChartsResult.markpoint_data.add(p);
             }
 
             // 处理线段 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            List<ChanPoint> listChanLine_1f = analyseChanPoint_index(index_data);
+            List<ChanPoint> listChanLine_1f = analyseChanPoint_index(ts_code, index_data);
             System.out.println("ChanLine_1f.size: " + listChanLine_1f.size());
             List<ChanPoint> listChanLine_5f = analyseChanLine_v2(listChanLine_1f);
             System.out.println("ChanLine_5f.size: " + listChanLine_5f.size());
@@ -1530,7 +1687,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             // 标注 顶底 分型
             for (int x = 0; x < listChanLine_1f.size(); x++) {
                 ChanPoint item = listChanLine_1f.get(x);
-                PointCoord_base p = new PointCoord_base();
+                PointCoord p = new PointCoord();
                 p.symbolSize = 6;
                 p.itemStyle.color = "#FF3399";
                 p.coord[0] = item.trade_date;
@@ -1676,17 +1833,9 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             }
             listAreaCoord_5f.clear();
 
-            try {
-                objMapper.writeValue(witStr, eChartsResult);
-            } catch (JsonGenerationException e) {
-                logger.error(e.getLocalizedMessage());
-            } catch (JsonMappingException e) {
-                logger.error(e.getLocalizedMessage());
-            } catch (IOException e) {
-                logger.error(e.getLocalizedMessage());
-            }
-
-            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
+            // 保存数据到数据库中
+            eChartsResult.save();
+            inputStream = new ByteArrayInputStream("Good".getBytes("utf-8"));
 
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage());
@@ -1720,212 +1869,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     }
 
     /**
-     * 获取期货连续数据技术分析
-     *
-     * @param ts_code
-     * @param ts_name
-     */
-    private void getFutTech(String ts_code, String ts_name) {
-        ObjectMapper objMapper = new ObjectMapper();
-        StringWriter witStr = new StringWriter();
-        List<D2FutData> fut_data;
-        DAnalyseStockServiceI dAnalyseStockService;
-
-        dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
-
-        try {
-            HashMap<String, Object> param = new HashMap<>();
-
-            param.put("ts_code", ts_code);
-            fut_data = dAnalyseStockService.select2FutData(param);
-
-            String[] legend = {ts_name, "成交量", "BIAS:5", "BIAS:20", "MACD"};
-            EChartsResult_K eChartsResult = new EChartsResult_K(fut_data.size(), legend.length - 1);
-
-            eChartsResult.legend_data = legend.clone();
-            eChartsResult.legend_selected.clear();
-            eChartsResult.legend_selected.put(ts_name, true);
-            eChartsResult.legend_selected.put("成交量", false);
-            eChartsResult.legend_selected.put("BIAS:5", false);
-            eChartsResult.legend_selected.put("BIAS:20", false);
-            eChartsResult.legend_selected.put("MACD", false);
-
-            // 填充指数数据
-            for (int x = 0; x < fut_data.size(); x++) {
-                D2FutData item = fut_data.get(x);
-
-                eChartsResult.xAxis_data[x] = item.getTrade_date();
-                eChartsResult.series_data_k[x][0] = item.getOpen_val();
-                eChartsResult.series_data_k[x][1] = item.getClose_val();
-                eChartsResult.series_data_k[x][2] = item.getLow_val();
-                eChartsResult.series_data_k[x][3] = item.getHigh_val();
-                eChartsResult.series_data_vol[x] = item.getVolume_val();
-            }
-
-            // 计算均线、BIAS、MACD  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            Core taLibCore = new Core();
-            MInteger taLibBegin = new MInteger();
-            MInteger taLibLength = new MInteger();
-            double[] close_val_data = new double[eChartsResult.series_data_k.length];
-
-            for (int n = 0; n < close_val_data.length; n++) {
-                close_val_data[n] = eChartsResult.series_data_k[n][1];
-            }
-
-            int cha;
-            double[] taLibOut = new double[eChartsResult.series_data_k.length];
-            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 5, taLibBegin, taLibLength, taLibOut);
-            for (int x = 0; x < taLibLength.value; x++) {
-                cha = eChartsResult.series_data_ema_5.length - taLibLength.value;
-                eChartsResult.series_data_ema_5[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
-                // BIAS 5 Day
-                eChartsResult.series_data_bias_5[x + cha] = bias(eChartsResult.series_data_ema_5[x + cha], eChartsResult.series_data_k[x + cha][2]);
-            }
-            taLibCore.ema(0, close_val_data.length - 1, close_val_data, 20, taLibBegin, taLibLength, taLibOut);
-            for (int x = 0; x < taLibLength.value; x++) {
-                cha = eChartsResult.series_data_ema_20.length - taLibLength.value;
-                eChartsResult.series_data_ema_20[x + cha] = (double) Math.round(taLibOut[x] * 100) / 100;
-                // BIAS
-                eChartsResult.series_data_bias_20[x + cha] = bias(eChartsResult.series_data_ema_20[x + cha], eChartsResult.series_data_k[x + cha][2]);
-            }
-            double[] taLibOutMACD = new double[close_val_data.length];
-            double[] taLibOutMACDSignal = new double[close_val_data.length];
-            double[] taLibOutMACDHist = new double[close_val_data.length];
-            taLibCore.macd(0, close_val_data.length - 1, close_val_data, 12, 26, 9, taLibBegin, taLibLength, taLibOutMACD, taLibOutMACDSignal, taLibOutMACDHist);
-            for (int x = 0; x < taLibLength.value; x++) {
-                eChartsResult.series_data_macd[x + (eChartsResult.series_data_macd.length - taLibLength.value)] = (double) Math.round(taLibOutMACDHist[x] * 100) / 100;
-            }
-
-            // 处理线段 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            List<ChanPoint> listChanLine_1f = analyseChanPoint_fut(fut_data);
-            System.out.println("ChanLine_1f.size: " + listChanLine_1f.size());
-            List<ChanPoint> listChanLine_5f = analyseChanLine_v2(listChanLine_1f);
-            System.out.println("ChanLine_5f.size: " + listChanLine_5f.size());
-
-            fut_data.clear();
-
-            // 标注 顶底 分型
-            for (int x = 0; x < listChanLine_1f.size(); x++) {
-                ChanPoint item = listChanLine_1f.get(x);
-                PointCoord_base p = new PointCoord_base();
-                p.symbolSize = 6;
-                p.itemStyle.color = "#FF3399";
-                p.coord[0] = item.trade_date;
-                p.coord[1] = item.close_val + "";
-                eChartsResult.markpoint_data.add(p);
-            }
-
-            int index;
-            //double sum_val;
-            List<LineCoord>[] markline_1f = new List[listChanLine_1f.size() - 1];
-            List<LineCoord>[] markline_5f = new List[listChanLine_5f.size() - 1];
-            eChartsResult.markline_data = new List[markline_5f.length + markline_1f.length];
-            // 1F级线段
-            index = 0;
-            for (int x = 1; x < listChanLine_1f.size(); x++) {
-                ChanPoint itemEnd = listChanLine_1f.get(x);
-                ChanPoint itemFrom = listChanLine_1f.get(x - 1);
-                List<LineCoord> listP = new ArrayList<>();
-                LineCoord p1 = new LineCoord();
-                LineCoord p2 = new LineCoord();
-
-                p1.coord[0] = itemFrom.trade_date;
-                p1.coord[1] = itemFrom.close_val + "";
-                p1.lineStyle.color = "#CCCCCC";
-                p2.coord[0] = itemEnd.trade_date;
-                p2.coord[1] = itemEnd.close_val + "";
-                p2.lineStyle.color = "#CCCCCC";
-
-                listP.add(p1);
-                listP.add(p2);
-                markline_1f[index] = listP;
-                eChartsResult.markline_data[index] = listP;
-                index++;
-            }
-            listChanLine_1f.clear();
-
-            // 5F级线段
-            for (int x = 1; x < listChanLine_5f.size(); x++) {
-                ChanPoint itemEnd = listChanLine_5f.get(x);
-                ChanPoint itemFrom = listChanLine_5f.get(x - 1);
-                List<LineCoord> listP = new ArrayList<>();
-                LineCoord p1 = new LineCoord();
-                LineCoord p2 = new LineCoord();
-
-                p1.coord[0] = itemFrom.trade_date;
-                p1.coord[1] = itemFrom.close_val + "";
-                p1.lineStyle.color = "#9999ff";
-                p2.coord[0] = itemEnd.trade_date;
-                p2.coord[1] = itemEnd.close_val + "";
-                p2.lineStyle.color = "#9999ff";
-
-                listP.add(p1);
-                listP.add(p2);
-                markline_5f[index - markline_1f.length] = listP;
-                eChartsResult.markline_data[index] = listP;
-                index++;
-            }
-            listChanLine_5f.clear();
-
-            // 处理区域 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            index = 0;
-            List<AreaCoord> listAreaCoord_1f = analyseChanArea(markline_1f);
-            List<AreaCoord> listAreaCoord_5f = analyseChanArea(markline_5f);
-            System.out.println("listAreaCoord_1f.size(): " + listAreaCoord_1f.size());
-            System.out.println("listAreaCoord_5f.size(): " + listAreaCoord_5f.size());
-            eChartsResult.markarea_data = new List[listAreaCoord_1f.size() / 2 + listAreaCoord_5f.size() / 2];
-            for (int x = 0; x < listAreaCoord_1f.size() - 1; x += 2) {
-                List<AreaCoord> listP = new ArrayList<>();
-                AreaCoord p1 = listAreaCoord_1f.get(x);
-                AreaCoord p2 = listAreaCoord_1f.get(x + 1);
-                p1.itemStyle.color = "rgba(255, 204, 204, 0.8)";
-                p2.itemStyle.color = "rgba(255, 204, 204, 0.8)";
-                listP.add(p1);
-                listP.add(p2);
-                eChartsResult.markarea_data[index++] = listP;
-            }
-            listAreaCoord_1f.clear();
-            for (int x = 0; x < listAreaCoord_5f.size() - 1; x += 2) {
-                List<AreaCoord> listP = new ArrayList<>();
-                AreaCoord p1 = listAreaCoord_5f.get(x);
-                AreaCoord p2 = listAreaCoord_5f.get(x + 1);
-                p1.itemStyle.color = "rgba(255, 51, 153, 0.05)";
-                p2.itemStyle.color = "rgba(255, 51, 153, 0.05)";
-                listP.add(p1);
-                listP.add(p2);
-                eChartsResult.markarea_data[index++] = listP;
-            }
-            listAreaCoord_5f.clear();
-
-            try {
-                objMapper.writeValue(witStr, eChartsResult);
-            } catch (JsonGenerationException e) {
-                logger.error(e.getLocalizedMessage());
-            } catch (JsonMappingException e) {
-                logger.error(e.getLocalizedMessage());
-            } catch (IOException e) {
-                logger.error(e.getLocalizedMessage());
-            }
-
-            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
-
-        } catch (Exception e) {
-            logger.error(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 根据参数获取期货技术分析数据
+     * 分析并保存数据
      *
      * @return
      */
-    public String getFutTechByCode() {
-        String[] v = paramValue.split("_");
-
-        if (v.length == 2) {
-            getFutTech(v[0], v[1]);
-        }
+    public String anaIndexesTech() {
+        anaIndexesTech("000001.SH", "上证综指");
+        anaIndexesTech("399001.SZ", "深证成指");
+        anaIndexesTech("000852.SH", "中证1000");
+        anaIndexesTech("399006.SZ", "创业板指");
+        anaIndexesTech("000016.SH", "上证50");
         return SUCCESS;
     }
 

@@ -77,4 +77,48 @@ public interface DAnalyseStockMapper {
      * @return
      */
     D2TotalIndexBetweenDate select2TotalIndexBetweenDate(HashMap<String, String> param);
+
+    /**
+     * 清楚指定编码的分析结果数据
+     * @param ts_code
+     */
+    void deleteAnalyseKResult(String ts_code);
+
+    /**
+     * 插入分析结果数据
+     * @param analyseKResult
+     */
+    void insertAnalyseKResult(com.mp2.analysestock.db.model.D2AnalyseKResult analyseKResult);
+    /**
+     * 清楚指定编码的分析结果数据
+     * @param ts_code
+     */
+    void deleteAnalyseRicheResult(String ts_code);
+
+    /**
+     * 插入分析结果数据
+     * @param analyseRicheResult
+     */
+    void insertAnalyseRicheResult(com.mp2.analysestock.db.model.D2AnalyseRicheResult analyseRicheResult);
+
+    /**
+     * 获取指定编码的分析后K线数据
+     * @param param
+     * @return
+     */
+    List<D2AnalyseKResult> selectAnalyseKResult(HashMap<String, String> param);
+
+    /**
+     * 获取指定编码的分析技术数据
+     * @param param
+     * @return
+     */
+    List<D2AnalyseRicheResult> selectAnalyseRicheResult(HashMap<String, String> param);
+
+    /**
+     * 通过配置表手动补充分析的结果不足数据
+     * @param param
+     * @return
+     */
+    List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param);
 }

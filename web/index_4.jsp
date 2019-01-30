@@ -22,6 +22,7 @@
 </head>
 
 <body>
+<div><a onclick="analyseIndexData();">计算数据</a></div>
 
 <div id="div_indexe_000001SH" style="width: 1680px; height: 500px;"></div>
 <div id="div_indexe_399001SZ" style="width: 1680px; height: 500px;"></div>
@@ -61,12 +62,26 @@
         "hideMethod": "fadeOut"
     };
 
+    function analyseIndexData() {
+        toastr.info("开始计算数据...");
+
+        $.ajax({
+            type: "POST",
+            async: true,
+            url: encodeURI("anaIndexesTech.action"),
+            dataType: "json",
+            success: function () {
+                toastr.info("常用指数 计算完毕!");
+            }
+        });
+    }
+
     function chartLoadData(myChart, actionName, titleName, zoomStart) {
         myChart.showLoading();
 
         $.ajax({
             type: "POST",
-            async: false,
+            async: true,
             url: encodeURI(actionName),
             dataType: "json",
             success: function (svr_data) {
