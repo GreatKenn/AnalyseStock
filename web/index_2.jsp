@@ -22,8 +22,7 @@
 
 <body>
 
-<div id="div_indexes" style="width: 1600px; height: 500px;"></div>
-<div id="div_total" style="width: 1600px; height: 500px;"></div>
+<div id="div_total" style="width: 1800px; height: 800px;"></div>
 
 <br>
 <br>
@@ -45,97 +44,14 @@
 
     $(document).ready(function () {
         // 基于准备好的dom，初始化echarts实例
-        var myChart_indexes = echarts.init(document.getElementById('div_indexes'));
         var myChart_total = echarts.init(document.getElementById('div_total'));
 
-        myChart_indexes.showLoading();
         myChart_total.showLoading();
 
         $.ajax({
             type: "POST",
             async: false,
-            url: encodeURI("qryIndexes.action"),
-            dataType: "json",
-            success: function (svr_data) {
-                myChart_indexes.hideLoading();
-
-                var option = {
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: {            // 坐标轴指示器，坐标轴触发有效
-                            type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
-                        }
-                    },
-                    legend: {
-                        data: svr_data.legend_data,
-                        selected: svr_data.legend_selected
-                    },
-                    grid: {
-                        left: '3%',
-                        right: '10%',
-                        bottom: '3%',
-                        containLabel: true
-                    },
-                    dataZoom: [
-                        {
-                            type: 'slider',
-                            start: 99,
-                            end: 100
-                        }
-                    ],
-                    xAxis: [
-                        {
-                            type: 'category',
-                            data: svr_data.xAxis_data
-                        }
-                    ],
-                    yAxis: [
-                        {
-                            name: '指数',
-                            position: 'left',
-                            type: 'value',
-                            axisLabel: {
-                                show: false
-                            }
-                        }
-                    ],
-                    series: [
-                        {
-                            name: '上证综指',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            data: svr_data.series_data[0]
-                        },
-                        {
-                            name: '深证成指',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            data: svr_data.series_data[1]
-                        },
-                        {
-                            name: '中证1000',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            data: svr_data.series_data[2]
-                        },
-                        {
-                            name: '创业板指',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            data: svr_data.series_data[3]
-                        }
-                    ]
-                };
-
-                // 使用刚指定的配置项和数据显示图表。
-                myChart_indexes.setOption(option);
-            }
-        });
-
-        $.ajax({
-            type: "POST",
-            async: false,
-            url: encodeURI("qryEveryDayTotal.action"),
+            url: encodeURI("qryIndexesDailyBasic_000001SH.action"),
             dataType: "json",
             success: function (svr_data) {
                 myChart_total.hideLoading();
@@ -143,8 +59,8 @@
                 var option = {
                     tooltip: {
                         trigger: 'axis',
-                        axisPointer: {            // 坐标轴指示器，坐标轴触发有效
-                            type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                        axisPointer: {
+                            type: 'cross'
                         }
                     },
                     legend: {
@@ -172,7 +88,39 @@
                     ],
                     yAxis: [
                         {
-                            name: '价值',
+                            name: '市值',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '股本',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '换手率',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '市盈率',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '市净率',
                             position: 'left',
                             type: 'value',
                             axisLabel: {
@@ -180,46 +128,67 @@
                             }
                         }
                     ],
+                    /* "总市值(亿元)", "流通市值(亿元)", "总股本(亿股)", "流通股本", "自由流通股本", "换手率", "换手率(基于自由流通股本)", "市盈率", "市盈率TTM", "市净率" */
                     series: [
                         {
-                            name: '上市变动',
+                            name: '总市值(亿元)',
                             type: 'line',
                             yAxisIndex: 0,
-                            data: svr_data.series_data[4]
-                        },
-                        {
-                            name: '深市变动',
-                            type: 'line',
-                            yAxisIndex: 0,
-                            data: svr_data.series_data[5]
-                        },
-                        {
-                            name: '上证均价',
-                            type: 'bar',
-                            yAxisIndex: 0,
-                            stack: '均价',
                             data: svr_data.series_data[0]
                         },
                         {
-                            name: '深证均价',
-                            type: 'bar',
+                            name: '流通市值(亿元)',
+                            type: 'line',
                             yAxisIndex: 0,
-                            stack: '均价',
                             data: svr_data.series_data[1]
                         },
                         {
-                            name: '上证换手',
-                            type: 'bar',
-                            yAxisIndex: 0,
-                            stack: '换手',
+                            name: '总股本(亿股)',
+                            type: 'line',
+                            yAxisIndex: 1,
                             data: svr_data.series_data[2]
                         },
                         {
-                            name: '深证换手',
-                            type: 'bar',
-                            yAxisIndex: 0,
-                            stack: '换手',
+                            name: '流通股本',
+                            type: 'line',
+                            yAxisIndex: 1,
                             data: svr_data.series_data[3]
+                        },
+                        {
+                            name: '自由流通股本',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: svr_data.series_data[4]
+                        },
+                        {
+                            name: '换手率',
+                            type: 'line',
+                            yAxisIndex: 2,
+                            data: svr_data.series_data[5]
+                        },
+                        {
+                            name: '换手率(基于自由流通股本)',
+                            type: 'line',
+                            yAxisIndex: 2,
+                            data: svr_data.series_data[6]
+                        },
+                        {
+                            name: '市盈率',
+                            type: 'line',
+                            yAxisIndex: 3,
+                            data: svr_data.series_data[7]
+                        },
+                        {
+                            name: '市盈率TTM',
+                            type: 'line',
+                            yAxisIndex: 3,
+                            data: svr_data.series_data[8]
+                        },
+                        {
+                            name: '市净率',
+                            type: 'line',
+                            yAxisIndex: 4,
+                            data: svr_data.series_data[9]
                         }
 
                     ]
@@ -229,8 +198,6 @@
                 myChart_total.setOption(option);
             }
         });
-
-        echarts.connect([myChart_indexes, myChart_total]);
 
     });
 </script>

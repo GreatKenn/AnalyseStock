@@ -30,7 +30,14 @@ public interface DAnalyseStockMapper {
      * @param param
      * @return
      */
-    List<D2IndexData> select2IndexData(HashMap<String, Object> param);
+    List<D2IndexData> select2IndexData(HashMap<String, String> param);
+
+    /**
+     * 根据 ts_code 参数取预测数据
+     * @param param
+     * @return
+     */
+    List<D2ProphetData> selectProphetData(HashMap<String, String> param);
 
     /**
      * 根据 ts_code 获取每日期货数据
@@ -44,7 +51,7 @@ public interface DAnalyseStockMapper {
      * @param param
      * @return
      */
-    List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param);
+    List<D2IndexData> select2IndexMinDateByYear(HashMap<String, String> param);
 
     /**
      * 获取市值数据
@@ -121,4 +128,24 @@ public interface DAnalyseStockMapper {
      * @return
      */
     List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param);
+
+    /**
+     * 清楚指定编码的预测准备数据
+     * @param param
+     */
+    void deleteProphetReady(HashMap<String, String> param);
+
+    /**
+     * 插入预测准备数据
+     * @param prophetReady
+     */
+    void insertProphetReady(D2ProphetReady prophetReady);
+
+    /**
+     * 根据指数编码，获取所有指数数据
+     * @param param
+     * @return
+     */
+    List<D2IndexesDailyBasicResult> select2IndexesDailyBasic(HashMap<String, String> param);
+
 }

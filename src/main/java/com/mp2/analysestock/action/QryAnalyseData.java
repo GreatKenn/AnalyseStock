@@ -74,6 +74,53 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         }
     }
 
+    class ProphetData {
+        public String date;
+        public double value;
+        public double l;
+        public double u;
+    }
+
+    class EChartsResult_Prophet {
+        public ProphetData[] series_data;
+
+        private String ts_code;
+        private String ts_name;
+
+        public EChartsResult_Prophet(String ts_code, String ts_name) {
+            this.ts_code = ts_code;
+            this.ts_name = ts_name;
+        }
+
+        /**
+         * 从数据库中读取数据
+         */
+        public void load() {
+            int sizeItems;
+            HashMap<String, String> param = new HashMap<>();
+            DAnalyseStockServiceI dAnalyseStockService;
+
+            dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+            param.clear();
+            param.put("ts_code", ts_code);
+            List<D2ProphetData> listAnalyseKResult = dAnalyseStockService.selectProphetData(param);
+            sizeItems = listAnalyseKResult.size();
+            this.series_data = new ProphetData[sizeItems];
+            for (int n = 0; n < sizeItems; n++) {
+                D2ProphetData item = listAnalyseKResult.get(n);
+                // System.out.println(item.toString());
+                ProphetData t = new ProphetData();
+                t.date = item.getTrade_date();
+                t.value = item.getYhat();
+                t.u = item.getYhat_upper();
+                t.l = item.getYhat_lower();
+
+                this.series_data[n] = t;
+            }
+        }
+    }
+
     class EChartsResult_K {
         public String[] legend_data;
         public HashMap<String, Boolean> legend_selected;
@@ -325,7 +372,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
 
         try {
-            HashMap<String, Object> param = new HashMap<>();
+            HashMap<String, String> param = new HashMap<>();
             param.put("ts_code", "000001.SH"); //上证综指
             index_000001 = dAnalyseStockService.select2IndexData(param);
             param.clear();
@@ -567,7 +614,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
 
         try {
-            HashMap<String, Object> param = new HashMap<>();
+            HashMap<String, String> param = new HashMap<>();
             param.put("ts_code", "000001.SH"); //上证综指
             index_000001 = dAnalyseStockService.select2IndexData(param);
 
@@ -1405,8 +1452,18 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         return re;
     }
 
-    private String getTotalIndexBetweenDateInfo(DAnalyseStockServiceI dAnalyseStockService, String ts_code, String begin_date, String end_date) {
-        String re = "";
+    class TotalBetweenDateData {
+        public int dayCount = 0;
+        public double sumVol = 0;
+        public double chgRate = 0;
+
+        public String toString() {
+            return "周期数：" + dayCount + "<br>成交量：" + sumVol + "<br>振幅：" + chgRate;
+        }
+    }
+
+    private TotalBetweenDateData getTotalIndexBetweenDateInfo(DAnalyseStockServiceI dAnalyseStockService, String ts_code, String begin_date, String end_date) {
+        TotalBetweenDateData re = new TotalBetweenDateData();
         HashMap<String, String> param = new HashMap<>();
         D2TotalIndexBetweenDate data;
 
@@ -1421,7 +1478,9 @@ public class QryAnalyseData extends MP2BaseActionSupport {
 
         data = dAnalyseStockService.select2TotalIndexBetweenDate(param);
         if (data != null) {
-            re = "周期数：" + data.getDay_count() + "<br>成交量：" + (double) Math.round(data.getSum_vol() / 10000 * 100) / 100 + "<br>振幅：" + data.getChg_rate();
+            re.dayCount = data.getDay_count();
+            re.sumVol = (double) Math.round(data.getSum_vol() / 10000 * 100) / 100;
+            re.chgRate = data.getChg_rate();
         }
 
         // System.out.println("getTotalIndexBetweenDateInfo(" + ts_code + ", " + begin_date + ", " + end_date + ")-> " + data);
@@ -1490,6 +1549,40 @@ public class QryAnalyseData extends MP2BaseActionSupport {
     }
 
     /**
+     * 根据指数编码获取指数预测数据
+     *
+     * @param ts_code
+     * @param ts_name
+     */
+    private void getIndexesProphet(String ts_code, String ts_name) {
+        ObjectMapper objMapper = new ObjectMapper();
+        StringWriter witStr = new StringWriter();
+
+        try {
+            EChartsResult_Prophet eChartsResult = new EChartsResult_Prophet(ts_code, ts_name);
+
+            // 装载数据库里的数据
+            eChartsResult.load();
+
+            try {
+                objMapper.writeValue(witStr, eChartsResult.series_data);
+            } catch (JsonGenerationException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (JsonMappingException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage());
+            }
+
+            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
+
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 分析指数的技术分析数据并保存到表中
      *
      * @return
@@ -1501,7 +1594,7 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
 
         try {
-            HashMap<String, Object> param = new HashMap<>();
+            HashMap<String, String> param = new HashMap<>();
 
             param.put("ts_code", ts_code);
             index_data = dAnalyseStockService.select2IndexData(param);
@@ -1695,6 +1788,12 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 eChartsResult.markpoint_data.add(p);
             }
 
+            // 清除预测准备数据
+            param.clear();
+            param.put("ts_code", ts_code);
+            param.put("class_str", "startLine");
+            dAnalyseStockService.deleteProphetReady(param);
+
             int index;
             String msg;
             double e_v, b_v;
@@ -1717,7 +1816,8 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 p2.coord[1] = itemEnd.close_val + "";
                 p2.lineStyle.color = "#CCCCCC";
 
-                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                TotalBetweenDateData totalData = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                msg = totalData.toString();
                 b_v = Double.parseDouble(p1.coord[1]);
                 e_v = Double.parseDouble(p2.coord[1]);
                 if (b_v > e_v) {
@@ -1733,6 +1833,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 listP.add(p2);
                 markline_1f[index] = listP;
                 eChartsResult.markline_data[index] = listP;
+
+                //if (x < listChanLine_1f.size() - 1) {
+                D2ProphetReady prophetReady = new D2ProphetReady();
+                prophetReady.setTs_code(ts_code);
+                prophetReady.setTrade_date(p1.coord[0].substring(0, 4) + "-" + p1.coord[0].substring(4, 6) + "-" + p1.coord[0].substring(6, 8));
+                prophetReady.setClass_str("startLine");
+                prophetReady.setY(totalData.dayCount);
+                dAnalyseStockService.insertProphetReady(prophetReady);
+                //}
+
                 index++;
             }
             listChanLine_1f.clear();
@@ -1753,7 +1863,8 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 p2.coord[1] = itemEnd.close_val + "";
                 p2.lineStyle.color = "#9999ff";
 
-                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                TotalBetweenDateData totalData = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                msg = totalData.toString();
                 b_v = Double.parseDouble(p1.coord[1]);
                 e_v = Double.parseDouble(p2.coord[1]);
                 if (b_v > e_v) {
@@ -1806,7 +1917,8 @@ public class QryAnalyseData extends MP2BaseActionSupport {
                 AreaCoord p2 = listAreaCoord_1f.get(x + 1);
                 p1.itemStyle.color = "rgba(255, 204, 204, 0.8)";
                 p2.itemStyle.color = "rgba(255, 204, 204, 0.8)";
-                msg = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                TotalBetweenDateData totalData = getTotalIndexBetweenDateInfo(dAnalyseStockService, ts_code, p1.coord[0], p2.coord[0]);
+                msg = totalData.toString();
                 b_v = Double.parseDouble(p1.coord[1]);
                 e_v = Double.parseDouble(p2.coord[1]);
                 if (b_v > e_v) {
@@ -1836,6 +1948,92 @@ public class QryAnalyseData extends MP2BaseActionSupport {
             // 保存数据到数据库中
             eChartsResult.save();
             inputStream = new ByteArrayInputStream("Good".getBytes("utf-8"));
+
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 大盘指数每日指标
+     *
+     * @param ts_code
+     * @param ts_name
+     */
+    private void getIndexesDailyBasic(String ts_code, String ts_name) {
+        ObjectMapper objMapper = new ObjectMapper();
+        StringWriter witStr = new StringWriter();
+        HashMap<String, String> param = new HashMap<>();
+        DAnalyseStockServiceI dAnalyseStockService;
+        List<D2IndexesDailyBasicResult> listData;
+
+        dAnalyseStockService = (DAnalyseStockServiceI) acMyBatis.getBean("dAnalyseStockService");
+
+        try {
+            param.put("ts_code", ts_code);
+            listData = dAnalyseStockService.select2IndexesDailyBasic(param);
+
+            int x = 0;
+            String[] legend = {"总市值(亿元)", "流通市值(亿元)", "总股本(亿股)", "流通股本", "自由流通股本", "换手率", "换手率(基于自由流通股本)", "市盈率", "市盈率TTM", "市净率"};
+            EChartsResult_02 eChartsResult = new EChartsResult_02(listData.size(), legend.length);
+
+            eChartsResult.legend_data = legend.clone();
+            eChartsResult.legend_selected.clear();
+            eChartsResult.legend_selected.put("总市值(亿元)", false);
+            eChartsResult.legend_selected.put("流通市值(亿元)", false);
+            eChartsResult.legend_selected.put("总股本(亿股)", false);
+            eChartsResult.legend_selected.put("流通股本", false);
+            eChartsResult.legend_selected.put("自由流通股本", false);
+            eChartsResult.legend_selected.put("换手率", false);
+            eChartsResult.legend_selected.put("换手率(基于自由流通股本)", false);
+            eChartsResult.legend_selected.put("市盈率", true);
+            eChartsResult.legend_selected.put("市盈率TTM", false);
+            eChartsResult.legend_selected.put("市净率", false);
+
+            for (D2IndexesDailyBasicResult item : listData) {
+                /*
+                total_mv	float	Y	当日总市值（元）
+                float_mv	float	Y	当日流通市值（元）
+                total_share	float	Y	当日总股本（股）
+                float_share	float	Y	当日流通股本（股）
+                free_share	float	Y	当日自由流通股本（股）
+                turnover_rate	float	Y	换手率
+                turnover_rate_f	float	Y	换手率(基于自由流通股本)
+                pe	float	Y	市盈率
+                pe_ttm	float	Y	市盈率TTM
+                pb	float	Y	市净率
+                * */
+                eChartsResult.xAxis_data[x] = item.getTrade_date();
+                eChartsResult.series_data[0][x] = item.getTotal_mv();
+                eChartsResult.series_data[1][x] = item.getFloat_mv();
+                eChartsResult.series_data[2][x] = item.getTotal_share();
+                eChartsResult.series_data[3][x] = item.getFloat_share();
+                eChartsResult.series_data[4][x] = item.getFree_share();
+                eChartsResult.series_data[5][x] = item.getTurnover_rate();
+                eChartsResult.series_data[6][x] = item.getTurnover_rate_f();
+                eChartsResult.series_data[7][x] = item.getPe();
+                eChartsResult.series_data[8][x] = item.getPe_ttm();
+                eChartsResult.series_data[9][x] = item.getPb();
+
+                x++;
+            }
+
+            listData.clear();
+
+            try {
+                objMapper.writeValue(witStr, eChartsResult);
+                //logger.info("toJSONString<" + witStr + ">");
+            } catch (JsonGenerationException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (JsonMappingException e) {
+                logger.error(e.getLocalizedMessage());
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage());
+            }
+
+            //System.out.println(str);
+            inputStream = new ByteArrayInputStream(witStr.toString().getBytes("utf-8"));
 
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage());
@@ -1879,6 +2077,16 @@ public class QryAnalyseData extends MP2BaseActionSupport {
         anaIndexesTech("000852.SH", "中证1000");
         anaIndexesTech("399006.SZ", "创业板指");
         anaIndexesTech("000016.SH", "上证50");
+        return SUCCESS;
+    }
+
+    public String getIndexesProphet_000001SH() {
+        getIndexesProphet("000001.SH", "上证综指");
+        return SUCCESS;
+    }
+
+    public String getIndexesDailyBasic_000001SH() {
+        getIndexesDailyBasic("000001.SH", "上证综指");
         return SUCCESS;
     }
 

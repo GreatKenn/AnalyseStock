@@ -25,6 +25,7 @@
 <div><a onclick="analyseIndexData();">计算数据</a></div>
 
 <div id="div_indexe_000001SH" style="width: 1680px; height: 500px;"></div>
+<!-- <div id="div_prophet_000001SH" style="width: 1680px; height: 500px;"></div> -->
 <div id="div_indexe_399001SZ" style="width: 1680px; height: 500px;"></div>
 <div id="div_indexe_000852SH" style="width: 1680px; height: 500px;"></div>
 <div id="div_indexe_000016SH" style="width: 1680px; height: 500px;"></div>
@@ -330,6 +331,88 @@
             }
         });
     }
+    /*
+    function chartProphetData(myChart, actionName, titleName, zoomStart) {
+        myChart.showLoading();
+
+        $.ajax({
+            type: "POST",
+            async: true,
+            url: encodeURI(actionName),
+            dataType: "json",
+            success: function (data) {
+                myChart.hideLoading();
+
+                var option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    grid: {
+                        left: '5%',
+                        right: '5%',
+                        bottom: '15%'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(function (item) {
+                            return item.date;
+                        }),
+                        scale: true,
+                        boundaryGap: false,
+                        axisLine: {onZero: false},
+                        splitLine: {show: false},
+                        splitNumber: 20,
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    },
+                    yAxis: {
+                        scale: true,
+                        splitArea: {
+                            show: false
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    dataZoom: [
+                        {
+                            type: 'inside',
+                            start: zoomStart,
+                            end: 100
+                        },
+                        {
+                            show: true,
+                            type: 'slider',
+                            y: '90%',
+                            start: zoomStart,
+                            end: 100
+                        }
+                    ],
+                    series: [{
+                        type: 'line',
+                        data: data.map(function (item) {
+                            return item.value;
+                        }),
+                        hoverAnimation: false,
+                        symbolSize: 6,
+                        itemStyle: {
+                            normal: {
+                                color: '#c23531'
+                            }
+                        },
+                        showSymbol: false
+                    }]
+                };
+
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+            }
+        });
+    }
+    */
 
     $(document).ready(function () {
         // 基于准备好的dom，初始化echarts实例
@@ -347,6 +430,9 @@
 
         echarts.connect([myChart_indexe_000001SH, myChart_indexe_399001SZ]);
 
+
+        //var myChart_prophet_000001SH = echarts.init(document.getElementById('div_prophet_000001SH'));
+        //chartProphetData(myChart_prophet_000001SH, "qryIndexesProphet_000001SH.action", "上证综指", 85);
     });
 
 </script>

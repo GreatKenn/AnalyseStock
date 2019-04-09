@@ -22,8 +22,8 @@
 
 <body>
 
-<div id="div_indexes" style="width: 1600px; height: 500px;"></div>
-<div id="div_up" style="width: 1600px; height: 500px;"></div>
+<div id="div_indexes" style="width: 1680px; height: 500px;"></div>
+<div id="div_up" style="width: 1680px; height: 500px;"></div>
 
 <br>
 <br>
@@ -91,7 +91,23 @@
                     ],
                     yAxis: [
                         {
-                            name: '指数',
+                            name: '上证综指',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '深证成指',
+                            position: 'left',
+                            type: 'value',
+                            axisLabel: {
+                                show: false
+                            }
+                        },
+                        {
+                            name: '创业板指',
                             position: 'left',
                             type: 'value',
                             axisLabel: {
@@ -109,19 +125,20 @@
                         {
                             name: '深证成指',
                             type: 'line',
-                            yAxisIndex: 0,
+                            yAxisIndex: 1,
                             data: svr_data.series_data[1]
-                        },
+                        }
+                        /*,
                         {
                             name: '中证1000',
                             type: 'line',
                             yAxisIndex: 0,
                             data: svr_data.series_data[2]
-                        },
+                        }*/,
                         {
                             name: '创业板指',
                             type: 'line',
-                            yAxisIndex: 0,
+                            yAxisIndex: 2,
                             data: svr_data.series_data[3]
                         }
                     ]

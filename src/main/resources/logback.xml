@@ -29,7 +29,7 @@
     <logger name="org.apache.jasper" level="ERROR"/>
     <logger name="net.sf.ehcache" level="ERROR"/>
     <logger name="org.mybatis" level="ERROR"/>
-    <logger name="com.fasterxml.jackson" level="DEBUG"/>
+    <logger name="com.fasterxml.jackson" level="ERROR"/>
     <logger name="com.mp2.analysestock.action" level="ERROR"/>
     <logger name="com.mp2.analysestock.db.dao" level="ERROR"/>
     <logger name="com.mp2.analysestock.db.map" level="ERROR"/>

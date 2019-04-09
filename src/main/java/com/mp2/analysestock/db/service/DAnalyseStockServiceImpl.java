@@ -53,8 +53,13 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
     }
 
     @Override
-    public List<D2IndexData> select2IndexData(HashMap<String, Object> param) {
+    public List<D2IndexData> select2IndexData(HashMap<String, String> param) {
         return mapper.select2IndexData(param);
+    }
+
+    @Override
+    public List<D2ProphetData> selectProphetData(HashMap<String, String> param) {
+        return mapper.selectProphetData(param);
     }
 
     @Override
@@ -63,7 +68,7 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
     }
 
     @Override
-    public List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param) {
+    public List<D2IndexData> select2IndexMinDateByYear(HashMap<String, String> param) {
         return mapper.select2IndexMinDateByYear(param);
     }
 
@@ -120,4 +125,13 @@ public class DAnalyseStockServiceImpl implements DAnalyseStockServiceI {
 
     @Override
     public List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param) { return mapper.selectCfgFixResult(param); }
+
+    @Override
+    public void deleteProphetReady(HashMap<String, String> param) { mapper.deleteProphetReady(param); }
+
+    @Override
+    public void insertProphetReady(D2ProphetReady prophetReady) { mapper.insertProphetReady(prophetReady); }
+
+    @Override
+    public List<D2IndexesDailyBasicResult> select2IndexesDailyBasic(HashMap<String, String> param) { return mapper.select2IndexesDailyBasic(param); }
 }

@@ -108,6 +108,13 @@
         <result column="amount" property="amount_val" jdbcType="INTEGER"/>
     </resultMap>
 
+    <resultMap id="ProphetDataResultMap" type="com.mp2.analysestock.db.model.D2ProphetData">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="yhat" property="yhat" jdbcType="DECIMAL"/>
+        <result column="yhat_lower" property="yhat_lower" jdbcType="DECIMAL"/>
+        <result column="yhat_upper" property="yhat_upper" jdbcType="DECIMAL"/>
+    </resultMap>
+
     <resultMap id="FutDataResultMap" type="com.mp2.analysestock.db.model.D2FutData">
         <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
         <result column="open" property="open_val" jdbcType="DECIMAL"/>
@@ -190,6 +197,20 @@
         <result column="class" property="class_str" jdbcType="VARCHAR"/>
         <result column="matcher" property="matcher" jdbcType="VARCHAR"/>
         <result column="data_json" property="data_json" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="Select2ResultMap_indexesDailyBasic" type="com.mp2.analysestock.db.model.D2IndexesDailyBasicResult">
+        <result column="trade_date" property="trade_date" jdbcType="VARCHAR"/>
+        <result column="total_mv" property="total_mv" jdbcType="DECIMAL"/>
+        <result column="float_mv" property="float_mv" jdbcType="DECIMAL"/>
+        <result column="total_share" property="total_share" jdbcType="DECIMAL"/>
+        <result column="float_share" property="float_share" jdbcType="DECIMAL"/>
+        <result column="free_share" property="free_share" jdbcType="DECIMAL"/>
+        <result column="turnover_rate" property="turnover_rate" jdbcType="DECIMAL"/>
+        <result column="turnover_rate_f" property="turnover_rate_f" jdbcType="DECIMAL"/>
+        <result column="pe" property="pe" jdbcType="DECIMAL"/>
+        <result column="pe_ttm" property="pe_ttm" jdbcType="DECIMAL"/>
+        <result column="pb" property="pb" jdbcType="DECIMAL"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -289,6 +310,13 @@
         select `trade_date`, `open`, `close`, `high`, `low`, `change`, `pct_change`, `vol`, `amount`
         from d2_index_daily
         where `ts_code` = #{ts_code} and `trade_date` >= '20000101'
+        order by trade_date
+    </select>
+
+    <select id="selectProphetData" resultMap="ProphetDataResultMap" parameterType="java.util.HashMap">
+        select substr(trade_date, 1, 10) as trade_date, yhat, yhat_lower, yhat_upper
+        from d2_index_daily_prophet
+        where `ts_code` = #{ts_code}
         order by trade_date
     </select>
 
@@ -405,5 +433,28 @@
         from `d2_cfg_fixresult`
         where `ts_code` = #{ts_code,jdbcType=VARCHAR} and `class` = #{class_str,jdbcType=VARCHAR}
         order by `matcher`
+    </select>
+
+    <delete id="deleteProphetReady" parameterType="java.util.HashMap">
+        delete from d2_prophet_ready
+        where `ts_code` = #{ts_code,jdbcType=VARCHAR} and `class` = #{class_str,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insertProphetReady" parameterType="com.mp2.analysestock.db.model.D2ProphetReady">
+        insert into d2_prophet_ready (`ts_code`, `trade_date`, `class`, `y`)
+        values (
+        #{ts_code,jdbcType=VARCHAR},
+        #{trade_date,jdbcType=VARCHAR},
+        #{class_str,jdbcType=VARCHAR},
+        #{y,jdbcType=DECIMAL}
+        )
+    </insert>
+
+    <select id="select2IndexesDailyBasic" parameterType="java.util.HashMap" resultMap="Select2ResultMap_indexesDailyBasic">
+        select trade_date, round(total_mv/100000000, 2) as total_mv, round(float_mv/100000000, 2) as float_mv
+        , round(total_share/100000000, 2) as total_share, round(float_share/100000000, 2) as float_share
+        , round(free_share/100000000, 2) as free_share, turnover_rate, turnover_rate_f, pe, pe_ttm, pb
+        from d2_index_dailybasic
+        where ts_code = #{ts_code,jdbcType=VARCHAR}
+        order by trade_date
     </select>
 </mapper>

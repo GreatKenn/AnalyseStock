@@ -14,6 +14,8 @@ public interface DAnalyseStockServiceI {
 
     List<DIndexData> selectIndexData(HashMap<String, Object> param);
 
+    List<D2ProphetData> selectProphetData(HashMap<String, String> param);
+
     List<DBaseData> selectIndex399006(HashMap<String, Object> param);
 
     List<DEventData> selectEventData();
@@ -24,11 +26,11 @@ public interface DAnalyseStockServiceI {
 
     List<DFeelingUpDown10> selectFeelingUpDown10();
 
-    List<D2IndexData> select2IndexData(HashMap<String, Object> param);
+    List<D2IndexData> select2IndexData(HashMap<String, String> param);
 
     List<D2FutData> select2FutData(HashMap<String, Object> param);
 
-    List<D2IndexData> select2IndexMinDateByYear(HashMap<String, Object> param);
+    List<D2IndexData> select2IndexMinDateByYear(HashMap<String, String> param);
 
     List<DEveryDayTotal> selectEveryDayTotal();
 
@@ -53,4 +55,10 @@ public interface DAnalyseStockServiceI {
     List<D2AnalyseRicheResult> selectAnalyseRicheResult(HashMap<String, String> param);
 
     List<D2CfgFixResult> selectCfgFixResult(HashMap<String, String> param);
+
+    void deleteProphetReady(HashMap<String, String> param);
+
+    void insertProphetReady(D2ProphetReady prophetReady);
+
+    List<D2IndexesDailyBasicResult> select2IndexesDailyBasic(HashMap<String, String> param);
 }
